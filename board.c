@@ -62,56 +62,81 @@ void cp_board(char sou[8][8], char des[8][8])
             des[i][j]=sou[i][j];
 }
 
-//check wether 'palyer' is in check, 1 for white, 0 for black
+//check wether 'player' is in check, 1 for white, 0 for black
 int check(char map[8][8], int player)
 {   
     int dir[8][2]={{1,1},{1,-1},{-1,1},{-1,-1},{1,0},{0,1},{-1,0},{0,-1}};
     int night[8][2]={{1,2},{1,-2},{-1,2},{-1,-2},{2,1},{2,-1},{-2,1},{-2,-1}};
 
-    int cap = player?0:32;
-    int d = player?-1:1;
+    char myking = player ? 'K' : 'k';   
+    int  att = player ? 0 : 32; 
 
-    int x,y;
-    for (x=0;x<8;x++)
-        for (y=0;y<8;y++)
-            if (map[x][y]=='k'+cap-32)
+    int  d = player ? -1 : 1; 
+
+    //先找到本方王的位置
+    int kx=-1, ky=-1;
+    for (int x=0;x<8 && kx<0;x++)
+        for (int y=0;y<8;y++)
+            if (map[x][y]==myking)
+            {
+                kx=x; ky=y;
                 break;
+            }
 
-    //knight
+    if (kx < 0)
+        return 0;
+
     for (int i=0;i<8;i++)
-        if (VALID_POS(x+night[i][0],y+night[i][1]) && map[x+night[i][0]][y+night[i][1]]=='n'-cap)
+        if (VALID_POS(kx+night[i][0],ky+night[i][1]) &&
+            map[kx+night[i][0]][ky+night[i][1]]=='n'-att)
             return 1;
 
-    //pawn
-    if ((VALID_POS(x+d,y-1) && map[x+d][y-1]=='P'+cap) || (VALID_POS(x+d,y+1) && map[x+d][y+1]=='P'+cap))
+    if ((VALID_POS(kx+d,ky-1) && map[kx+d][ky-1]=='p'-att) ||
+        (VALID_POS(kx+d,ky+1) && map[kx+d][ky+1]=='p'-att))
         return 1;
 
-    //rook & queen
-    for (int i=0;i<4;i++)
-    {
-        int len=1;
-        while (VALID_POS(x+len*dir[i][0],y+len*dir[i][1]) && map[x+len*dir[i][0]][y+len*dir[i][1]] == '-')
-            len++;
-        
-        if (!VALID_POS(x+len*dir[i][0],y+len*dir[i][1]))
-            return 0;
-
-        if (map[x+len*dir[i][0]][y+len*dir[i][1]] == 'R'+cap || map[x+len*dir[i][0]][y+len*dir[i][1]] == 'Q'+cap)
-            return 1;
-    }
-
-    //bishop & queen
     for (int i=4;i<8;i++)
     {
         int len=1;
-        while (VALID_POS(x+len*dir[i][0],y+len*dir[i][1]) && map[x+len*dir[i][0]][y+len*dir[i][1]] == '-')
+        while (1)
+        {
+            int nx = kx + len*dir[i][0];
+            int ny = ky + len*dir[i][1];
+            if (!VALID_POS(nx,ny) || map[nx][ny] != '-')
+                break; 
             len++;
-        
-        if (map[x+len*dir[i][0]][y+len*dir[i][1]] == 'B'+cap || map[x+len*dir[i][0]][y+len*dir[i][1]] == 'Q'+cap)
-            return 1;
+        }
+        int nx = kx + len*dir[i][0];
+        int ny = ky + len*dir[i][1];
+        if (VALID_POS(nx,ny))
+        {
+            char c = map[nx][ny];
+            if (c=='r'-att || c=='q'-att)
+                return 1;
+        }
+    }
+
+    for (int i=0;i<4;i++)
+    {
+        int len=1;
+        while (1)
+        {
+            int nx = kx + len*dir[i][0];
+            int ny = ky + len*dir[i][1];
+            if (!VALID_POS(nx,ny) || map[nx][ny] != '-')
+                break;
+            len++;
+        }
+        int nx = kx + len*dir[i][0];
+        int ny = ky + len*dir[i][1];
+        if (VALID_POS(nx,ny))
+        {
+            char c = map[nx][ny];
+            if (c=='b'-att || c=='q'-att)
+                return 1;
+        }
     }
 
     return 0;
-
 }
 

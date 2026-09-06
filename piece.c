@@ -30,10 +30,17 @@ int BLACK_EN=-2;
 
 int valid_move(char* move, char map[8][8])
 {
+    if (move == NULL || strlen(move) < 4)
+        return 0;
+
     int from_row = 7 - (move[1] - '1');
     int from_col = move[0] - 'a';
     int to_row = 7 - (move[3] - '1');
     int to_col = move[2] - 'a';
+
+    if (from_row < 0 || from_row > 7 || from_col < 0 || from_col > 7 ||
+        to_row   < 0 || to_row   > 7 || to_col   < 0 || to_col   > 7)
+        return 0;
 
     char type = map[from_row][from_col];
 
@@ -45,11 +52,6 @@ int valid_move(char* move, char map[8][8])
         return 0;
 
     if (type == '-')
-        return 0;
-
-
-    //out of the map
-    if ((to_row > 7 || to_row < 0) || (to_col > 7 || to_col < 0))
         return 0;
 
     int dx = abs(to_col - from_col);
@@ -77,7 +79,8 @@ int valid_move(char* move, char map[8][8])
             return 1;
 
         //enpassant
-        if (dx == 1 && dy == 1 && to_row - from_row == 1 && map[to_row][to_col] == 'P' && (from_col==WHITE_EN-1 || from_col==WHITE_EN+1) && from_row == 4)
+        if (dx == 1 && dy == 1 && to_row - from_row == 1 && from_row == 4 &&
+            to_col == WHITE_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'P')
             return 2;
 
         return 0;
@@ -238,7 +241,8 @@ int valid_move(char* move, char map[8][8])
             return 1;
 
         //enpassant
-        if (dx == 1 && dy == 1 && to_row - from_row == -1 && map[to_row][to_col] == 'p' && (from_col == BLACK_EN - 1 || from_col == BLACK_EN + 1) && from_row == 3)
+        if (dx == 1 && dy == 1 && to_row - from_row == -1 && from_row == 3 &&
+            to_col == BLACK_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'p')
             return 2;
 
         return 0;
@@ -401,13 +405,19 @@ int move(char ctrl[6], char map[8][8])
                 return 0;
         }
 
+
+        if (map[buttom][4] != 'K'+cap || map[buttom][0] != 'R'+cap)
+            return 0;
+
         //blocked
         if (map[buttom][1]!='-' || map[buttom][2]!='-' || map[buttom][3]!='-')
             return 0;
 
             
-        //in check
-        for (int i=1;i<=4;i++)
+        if (check(map,curr))
+            return 0;
+
+        for (int i=2;i<=3;i++)
         {
             map[buttom][i]='K'+cap,map[buttom][4]='-';
             
@@ -434,6 +444,9 @@ int move(char ctrl[6], char map[8][8])
             BLACK_A_ROOK_MOVE=1;
             BLACK_KING_MOVE=1;
         }
+
+        WHITE_EN = -2;
+        BLACK_EN = -2;
         
         return 1;
     }
@@ -441,20 +454,29 @@ int move(char ctrl[6], char map[8][8])
     //short castle
     if (strcmp(ctrl,"O-O")==0 || strcmp(ctrl,"o-o")==0)
     {
-        //already move
+        //already moved
         if (curr)
+        {
             if (WHITE_H_ROOK_MOVE==1 || WHITE_KING_MOVE==1)
                 return 0;
+        }
         else
+        {
             if (BLACK_H_ROOK_MOVE==1 || BLACK_KING_MOVE==1)
                 return 0;
+        }
+
+        if (map[buttom][4] != 'K'+cap || map[buttom][7] != 'R'+cap)
+            return 0;
 
         //blocked
         if (map[buttom][5]!='-' || map[buttom][6]!='-')
             return 0;
 
-        //in check
-        for (int i=4;i<=6;i++)
+        if (check(map,curr))
+            return 0;
+
+        for (int i=5;i<=6;i++)
         {
             map[buttom][i]='K'+cap,map[buttom][4]='-';
             
@@ -473,14 +495,17 @@ int move(char ctrl[6], char map[8][8])
 
         if (curr)
         {
-            WHITE_A_ROOK_MOVE=1;
+            WHITE_H_ROOK_MOVE=1;
             WHITE_KING_MOVE=1;
         }
         else
         {
-            BLACK_A_ROOK_MOVE=1;
-            BLACK_A_ROOK_MOVE=1;
+            BLACK_H_ROOK_MOVE=1;
+            BLACK_KING_MOVE=1;
         }
+
+        WHITE_EN = -2;
+        BLACK_EN = -2;
 
         return 1;
     }
@@ -494,48 +519,93 @@ int move(char ctrl[6], char map[8][8])
         int piece=map[from[0]][from[1]];
         int dest=map[to[0]][to[1]];
 
-        int result=valid_move(ctrl,map);
-      
-        if (result==0)
-            return 0;
-        if (result==2)
-            
+        int result = valid_move(ctrl, map);
 
-        map[from[0]][from[1]]='-';
-        map[to[0]][to[1]]=piece;
+        if (result == 0)
+            return 0;     
 
-        if (check(map,curr))
+        int ep_captured = 0;
+        if (result == 2)
         {
-            map[from[0]][from[1]]=piece;
-            map[to[0]][to[1]]=dest;
+            ep_captured = map[from[0]][to[1]];
+            map[from[0]][to[1]] = '-';
+        }
+
+        map[from[0]][from[1]] = '-';
+        map[to[0]][to[1]] = piece;
+
+        if (check(map, curr))
+        {
+            map[from[0]][from[1]] = piece;
+            map[to[0]][to[1]] = dest;
+            if (result == 2)
+                map[from[0]][to[1]] = ep_captured;
             return 0;
         }
 
+        if (piece == 'P' && to[0] == 0)
+        {
+            char p;
+            while(1)
+            {
+                scanf(" %c ",&p);
+                if (p!='Q' && p!='R' && p!='B' && p!='N')
+                    continue;
+
+                break;
+            }
+            map[to[0]][to[1]] = p;
+        }
+        else if (piece == 'p' && to[0] == 7)
+        {
+            char p;
+            while(1)
+            {
+                scanf(" %c ",&p);
+                if (p!='q' && p!='r' && p!='b' && p!='n')
+                    continue;
+
+                break;
+            }
+            map[to[0]][to[1]] = p;
+        }
+
+
+        WHITE_EN = -2;
         BLACK_EN = -2;
 
-        if (piece=='K'+cap)
-            if (curr)
-                WHITE_KING_MOVE=1;
-            else 
-                BLACK_KING_MOVE=1;
-        
-        if (piece=='R'+cap && ctrl[0]=='a' && ctrl[1]==buttom+'1')
-            if (curr)
-                WHITE_A_ROOK_MOVE=1;
-            else
-                BLACK_A_ROOK_MOVE=1;
 
-        if (piece=='R'+cap && ctrl[0]=='h' && ctrl[1]==buttom+'1')
-            if (curr)
-                WHITE_H_ROOK_MOVE=1;
-            else
-                BLACK_H_ROOK_MOVE=1;
+        if (piece == 'K' + cap)
+        {
+            if (curr) WHITE_KING_MOVE = 1;
+            else      BLACK_KING_MOVE = 1;
+        }
 
-        if (piece=='P'+cap)
-            if (curr && ctrl[1]=='2' && ctrl[3]=='4')
-                WHITE_EN=from[1];
-            if (!curr && ctrl[1]=='7' && ctrl[3]=='5')
-                BLACK_EN=from[1];
+        if (piece == 'R' + cap)
+        {
+            if (curr)
+            {
+                if (ctrl[0] == 'a' && ctrl[1] == '1')
+                    WHITE_A_ROOK_MOVE = 1;
+                else if (ctrl[0] == 'h' && ctrl[1] == '1')
+                    WHITE_H_ROOK_MOVE = 1;
+            }
+            else
+            {
+                if (ctrl[0] == 'a' && ctrl[1] == '8')
+                    BLACK_A_ROOK_MOVE = 1;
+                else if (ctrl[0] == 'h' && ctrl[1] == '8')
+                    BLACK_H_ROOK_MOVE = 1;
+            }
+        }
+
+        if (piece == 'P' + cap)
+        {
+            if (ctrl[1] == '2' && ctrl[3] == '4')
+                WHITE_EN = from[1];
+            else if (ctrl[1] == '7' && ctrl[3] == '5')
+                BLACK_EN = from[1];
+        }
 
         return 1;
     }
