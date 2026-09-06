@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "board.h"
 
@@ -76,7 +77,7 @@ int valid_move(char* move, char map[8][8])
             return 1;
 
         //enpassant
-        if (dx == 1 && dy == 1 && to_row - from_row == 1 && map[to_row][to_col + 1] == 'P' && (from_col==WHITE_EN-1 || from_col==WHITE_EN+1) && from_row == 4)
+        if (dx == 1 && dy == 1 && to_row - from_row == 1 && map[to_row][to_col] == 'P' && (from_col==WHITE_EN-1 || from_col==WHITE_EN+1) && from_row == 4)
             return 2;
 
         return 0;
@@ -206,7 +207,7 @@ int valid_move(char* move, char map[8][8])
     //black king to move
     if (type == 'k')
     {
-        if ((dy == 1 && dx == 0) || (dx == 0 && dy == 1) || (dx == 1 && dy == 1))
+        if ((dy == 1 && dx == 0) || (dy == 0 && dx == 1) || (dx == 1 && dy == 1))
         {
             if (map[to_row][to_col] >= 'a' && map[to_row][to_col] <= 'z')
                 return 0;
@@ -226,10 +227,7 @@ int valid_move(char* move, char map[8][8])
 
         //move 2 square
         if (from_row == 6 && dx == 0 && to_row - from_row == -2 && map[to_row][to_col] == '-' && map[from_row - 1][to_col] == '-')
-        {
-            WHITE_EN = from_col;
             return 1;
-        }
 
         //move 1 square
         if (dx == 0 && to_row - from_row == -1 && map[to_row][to_col] == '-')
@@ -240,8 +238,8 @@ int valid_move(char* move, char map[8][8])
             return 1;
 
         //enpassant
-        if (dx == 1 && dy == 1 && to_row - from_row == -1 && map[to_row][to_col + 1] == 'p' && (from_col == BLACK_EN - 1 || from_col == BLACK_EN + 1) && from_row == 3)
-            return 1;
+        if (dx == 1 && dy == 1 && to_row - from_row == -1 && map[to_row][to_col] == 'p' && (from_col == BLACK_EN - 1 || from_col == BLACK_EN + 1) && from_row == 3)
+            return 2;
 
         return 0;
     }
@@ -371,7 +369,7 @@ int valid_move(char* move, char map[8][8])
     //white king to move
     if (type == 'K')
     {
-        if ((dy == 1 && dx == 0) || (dx == 0 && dy == 1) || (dx == 1 && dy == 1))
+        if ((dy == 1 && dx == 0) || (dx == 1 && dy == 0) || (dx == 1 && dy == 1))
         {
             if (map[to_row][to_col] >= 'A' && map[to_row][to_col] <= 'Z')
                 return 0;
@@ -393,11 +391,15 @@ int move(char ctrl[6], char map[8][8])
     {
         //already moved
         if (curr)
+        {
             if (WHITE_A_ROOK_MOVE==1 || WHITE_KING_MOVE==1)
                 return 0;
+        }
         else
+        {
             if (BLACK_A_ROOK_MOVE==1 || BLACK_KING_MOVE==1)
                 return 0;
+        }
 
         //blocked
         if (map[buttom][1]!='-' || map[buttom][2]!='-' || map[buttom][3]!='-')
@@ -419,6 +421,8 @@ int move(char ctrl[6], char map[8][8])
 
         map[buttom][3]='R'+cap;
         map[buttom][2]='K'+cap;
+        map[buttom][0]='-';
+        map[buttom][4]='-';
 
         if (curr)
         {
@@ -439,10 +443,10 @@ int move(char ctrl[6], char map[8][8])
     {
         //already move
         if (curr)
-            if (WHITE_A_ROOK_MOVE==1 || WHITE_KING_MOVE==1)
+            if (WHITE_H_ROOK_MOVE==1 || WHITE_KING_MOVE==1)
                 return 0;
         else
-            if (BLACK_A_ROOK_MOVE==1 || BLACK_KING_MOVE==1)
+            if (BLACK_H_ROOK_MOVE==1 || BLACK_KING_MOVE==1)
                 return 0;
 
         //blocked
@@ -464,6 +468,8 @@ int move(char ctrl[6], char map[8][8])
 
         map[buttom][5]='R'+cap;
         map[buttom][6]='K'+cap;
+        map[buttom][4]='-';
+        map[buttom][7]='-';
 
         if (curr)
         {
@@ -472,6 +478,7 @@ int move(char ctrl[6], char map[8][8])
         }
         else
         {
+            BLACK_A_ROOK_MOVE=1;
             BLACK_A_ROOK_MOVE=1;
         }
 
@@ -486,12 +493,16 @@ int move(char ctrl[6], char map[8][8])
 
         int piece=map[from[0]][from[1]];
         int dest=map[to[0]][to[1]];
+
+        int result=valid_move(ctrl,map);
+      
+        if (result==0)
+            return 0;
+        if (result==2)
             
+
         map[from[0]][from[1]]='-';
         map[to[0]][to[1]]=piece;
-
-        if (!valid_move(ctrl,map))
-            return 0;
 
         if (check(map,curr))
         {
@@ -503,21 +514,33 @@ int move(char ctrl[6], char map[8][8])
         BLACK_EN = -2;
 
         if (piece=='K'+cap)
-            WHITE_KING_MOVE=1;
+            if (curr)
+                WHITE_KING_MOVE=1;
+            else 
+                BLACK_KING_MOVE=1;
         
-        if (piece=='R'+cap && ctrl[0]=='a' && ctrl[1]==buttom)
-            WHITE_A_ROOK_MOVE=1;
+        if (piece=='R'+cap && ctrl[0]=='a' && ctrl[1]==buttom+'1')
+            if (curr)
+                WHITE_A_ROOK_MOVE=1;
+            else
+                BLACK_A_ROOK_MOVE=1;
 
-        if (piece=='R'+cap && ctrl[0]=='H' && ctrl[1]=='1')
-            WHITE_H_ROOK_MOVE=1;
+        if (piece=='R'+cap && ctrl[0]=='h' && ctrl[1]==buttom+'1')
+            if (curr)
+                WHITE_H_ROOK_MOVE=1;
+            else
+                BLACK_H_ROOK_MOVE=1;
 
-        if (piece=='P'+cap && ctrl[1]=='2' && ctrl[3]=='4')
-            WHITE_EN=from[0];
+        if (piece=='P'+cap)
+            if (curr && ctrl[1]=='2' && ctrl[3]=='4')
+                WHITE_EN=from[1];
+            if (!curr && ctrl[1]=='7' && ctrl[3]=='5')
+                BLACK_EN=from[1];
 
         return 1;
     }
     
-        //invalid input
+    //invalid input
     else
         return 0;
 }

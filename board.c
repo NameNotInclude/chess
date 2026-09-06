@@ -5,14 +5,15 @@
 // 1 for white to play, 0 for black.
 int curr = 1;
 
-char board[8][8] = {{'r','n','b','q','k','b','n','r'},
-                    {'p','p','p','p','p','p','p','p'},
-                    {'-','-','-','-','-','-','-','-'},
-                    {'-','-','-','-','-','-','-','-'},
-                    {'-','-','-','-','-','-','-','-'},
-                    {'-','-','-','-','-','-','-','-'},
-                    {'P','P','P','P','P','P','P','P'},
-                    {'R','N','B','Q','K','B','N','R'}};
+//                    a   b   c   d   e   f   g   h 
+char board[8][8] = {{'r','n','b','q','k','b','n','r'},//8
+                    {'p','p','p','p','p','p','p','p'},//7
+                    {'-','-','-','-','-','-','-','-'},//6
+                    {'-','-','-','-','-','-','-','-'},//5
+                    {'-','-','-','-','-','-','-','-'},//4
+                    {'-','-','-','-','-','-','-','-'},//3
+                    {'P','P','P','P','P','P','P','P'},//2
+                    {'R','N','B','Q','K','B','N','R'}};//1
 
 char temp_board[8][8] = {{'r','n','b','q','k','b','n','r'},
                          {'p','p','p','p','p','p','p','p'},
@@ -78,7 +79,7 @@ int check(char map[8][8], int player)
 
     //knight
     for (int i=0;i<8;i++)
-        if (VALID_POS(x+night[i][0],y+night[i][1]) && map[x+night[i][0],y+night[i][1]]=='N'+cap)
+        if (VALID_POS(x+night[i][0],y+night[i][1]) && map[x+night[i][0]][y+night[i][1]]=='n'-cap)
             return 1;
 
     //pawn
@@ -92,6 +93,9 @@ int check(char map[8][8], int player)
         while (VALID_POS(x+len*dir[i][0],y+len*dir[i][1]) && map[x+len*dir[i][0]][y+len*dir[i][1]] == '-')
             len++;
         
+        if (!VALID_POS(x+len*dir[i][0],y+len*dir[i][1]))
+            return 0;
+
         if (map[x+len*dir[i][0]][y+len*dir[i][1]] == 'R'+cap || map[x+len*dir[i][0]][y+len*dir[i][1]] == 'Q'+cap)
             return 1;
     }
