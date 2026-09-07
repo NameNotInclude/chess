@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "board.h"
+#include "piece.h"
 
 #define VALID_POS(x,y) ((x)>=0 && (x)<8 && (y)>=0 && (y)<8)
 // 1 for white to play, 0 for black.
@@ -73,7 +74,6 @@ int check(char map[8][8], int player)
 
     int  d = player ? -1 : 1; 
 
-    //先找到本方王的位置
     int kx=-1, ky=-1;
     for (int x=0;x<8 && kx<0;x++)
         for (int y=0;y<8;y++)
@@ -140,3 +140,134 @@ int check(char map[8][8], int player)
     return 0;
 }
 
+int mate(char map[8][8], int player)
+{
+    int dir[8][2]={{1,1},{1,-1},{-1,1},{-1,-1},{1,0},{0,1},{-1,0},{0,-1}};
+    int night[8][2]={{1,2},{1,-2},{-1,2},{-1,-2},{2,1},{2,-1},{-2,1},{-2,-1}};
+    int forward=curr?-1:1;
+
+    int cap=player?0:32;
+
+    for (int i=0;i<8;i++)
+    {
+        for (int j=0;j<8;j++)
+        {
+            char piece=map[i][j];
+
+            if (piece == 'N'+cap)
+                for (int k=0;k<8;k++)
+                {
+                    if (!VALID_POS(i+night[k][1],j+night[k][0]))
+                        continue;
+
+                    int des=map[i+night[k][1]][j+night[k][0]];
+
+                    char str[5]={'a'+j,'8'-i,'a'+j+night[k][0],'8'-i-night[k][1],'\0'};
+
+                    if (move(str,map))
+                    {
+                        map[i][j]=piece;
+                        map[i+night[k][1]][j+night[k][0]]=des;  
+
+                        return 0;
+                    }
+                }
+
+            if (piece == "R"+cap)
+                for (int k=4;k<8;k++)
+                {
+                    for (int l=1;l<8 && VALID_POS(i+l*dir[k][1],j+l*dir[k][0]);l++)
+                    {
+                        int des=map[i+l*dir[k][1]][j+l*dir[k][0]];
+
+                        char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
+
+                        if (move(str,map))
+                        {
+                            map[i][j]=piece;
+                            map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
+                            return 0;
+                        }
+                    }      
+                }
+
+            if (piece == "B"+cap)
+                for (int k=0;k<4;k++)
+                {
+                    for (int l=1;l<8 && VALID_POS(i+l*dir[k][1],j+l*dir[k][0]);l++)
+                    {
+                        int des=map[i+l*dir[k][1]][j+l*dir[k][0]];
+
+                        char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
+
+                        if (move(str,map))
+                        {
+                            map[i][j]=piece;
+                            map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
+                            return 0;
+                        }
+                    }      
+                }
+
+            if (piece == "Q"+cap)
+                for (int k=0;k<8;k++)
+                {
+                    for (int l=1;l<8 && VALID_POS(i+l*dir[k][1],j+l*dir[k][0]);l++)
+                    {
+                        int des=map[i+l*dir[k][1]][j+l*dir[k][0]];
+
+                        char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
+
+                        if (move(str,map))
+                        {
+                            map[i][j]=piece;
+                            map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
+                            return 0;
+                        }
+                    }      
+                }
+        
+            if (piece == "K"+cap)
+                for (int k=0;k<8;k++)
+                {
+                    if (!VALID_POS(i+dir[k][1],j+dir[k][0]))
+                        continue;
+
+                    int des=map[i+dir[k][1]][j+dir[k][0]];
+
+                    char str[5]={'a'+j,'8'-i,'a'+j+dir[k][0],'8'-i-dir[k][1],'\0'};
+
+                    if (move(str,map))
+                    {
+                        map[i][j]=piece;
+                        map[i+dir[k][1]][j+dir[k][0]]=des;
+                        return 0;
+                    }
+    
+                }       
+            
+
+            if (piece == 'P'+cap)
+            {
+                for (int k=-1;k<=1;k++)
+                {
+                    if (!VALID_POS(i+forward,j+k))
+                        continue;
+
+                    int des=map[i+forward][j+k];
+
+                    char str[5]={'a'+j,'8'-i,'a'+j+k,'8'-i-forward,'\0'};
+
+                    if (move(str,map))
+                    {
+                        map[i][j]=piece;
+                        map[i+forward][j+k]=des;
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+
+    return 1;
+}

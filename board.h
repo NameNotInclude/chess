@@ -46,4 +46,10 @@ void cp_board(char sou[8][8], char des[8][8]);
  */
 int check(char map[8][8], int player);
 
+/*
+* 判断 player是不是无合法步骤
+ *   map:    棋盘;player: 1 = 白方,0 = 黑方。
+ *   返回:   1 = 无,0 = 有。
+ */
+int mate(char map[8][8], int player);
 #endif

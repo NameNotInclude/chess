@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include "board.h"
+#include "piece.h"
 
 int main()
 {
-    board_print(board);
+    
     return 0;
 }

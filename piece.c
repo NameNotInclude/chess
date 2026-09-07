@@ -525,6 +525,7 @@ int move(char ctrl[6], char map[8][8])
             return 0;     
 
         int ep_captured = 0;
+        //吃过路兵
         if (result == 2)
         {
             ep_captured = map[from[0]][to[1]];
@@ -536,39 +537,19 @@ int move(char ctrl[6], char map[8][8])
 
         if (check(map, curr))
         {
+            //回滚送将操作
             map[from[0]][from[1]] = piece;
             map[to[0]][to[1]] = dest;
             if (result == 2)
                 map[from[0]][to[1]] = ep_captured;
             return 0;
         }
-
+        
+        //升变
         if (piece == 'P' && to[0] == 0)
-        {
-            char p;
-            while(1)
-            {
-                scanf(" %c ",&p);
-                if (p!='Q' && p!='R' && p!='B' && p!='N')
-                    continue;
-
-                break;
-            }
-            map[to[0]][to[1]] = p;
-        }
+            return 2;
         else if (piece == 'p' && to[0] == 7)
-        {
-            char p;
-            while(1)
-            {
-                scanf(" %c ",&p);
-                if (p!='q' && p!='r' && p!='b' && p!='n')
-                    continue;
-
-                break;
-            }
-            map[to[0]][to[1]] = p;
-        }
+            return 2;
 
 
         WHITE_EN = -2;
