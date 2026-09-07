@@ -4,7 +4,7 @@
 
 #define VALID_POS(x,y) ((x)>=0 && (x)<8 && (y)>=0 && (y)<8)
 // 1 for white to play, 0 for black.
-int curr = 1;
+int player = 1;
 
 //                    a   b   c   d   e   f   g   h 
 char board[8][8] = {{'r','n','b','q','k','b','n','r'},//8
@@ -25,9 +25,9 @@ char temp_board[8][8] = {{'r','n','b','q','k','b','n','r'},
                          {'P','P','P','P','P','P','P','P'},
                          {'R','N','B','Q','K','B','N','R'}};
 
-void board_print(char map[8][8])
+void board_print(char map[8][8],int player)
 {
-    if (curr)
+    if (player)
     {
         for (int i=0;i<8;i++)
         {
@@ -37,8 +37,6 @@ void board_print(char map[8][8])
             printf("\n\n");
         }
         printf("   a b c d e f g h\n");
-
-        curr=!curr;
     }
 
     else
@@ -51,8 +49,6 @@ void board_print(char map[8][8])
             printf("\n\n");
         }
         printf("   h g f e d c b a\n");
-        
-        curr=!curr;
     }
 }
 
@@ -140,11 +136,12 @@ int check(char map[8][8], int player)
     return 0;
 }
 
-int mate(char map[8][8], int player)
+int legal_move(char map[8][8], int player)
 {
     int dir[8][2]={{1,1},{1,-1},{-1,1},{-1,-1},{1,0},{0,1},{-1,0},{0,-1}};
     int night[8][2]={{1,2},{1,-2},{-1,2},{-1,-2},{2,1},{2,-1},{-2,1},{-2,-1}};
-    int forward=curr?-1:1;
+    int forward=player?-1:1;
+    int buttom=player?7:0;
 
     int cap=player?0:32;
 
@@ -173,11 +170,23 @@ int mate(char map[8][8], int player)
                     }
                 }
 
-            if (piece == "R"+cap)
+            if (piece == 'R'+cap)
                 for (int k=4;k<8;k++)
                 {
                     for (int l=1;l<8 && VALID_POS(i+l*dir[k][1],j+l*dir[k][0]);l++)
                     {
+                        int ROOK1,ROOK2;
+                        if (player)
+                        {
+                            ROOK1=WHITE_A_ROOK_MOVE;
+                            ROOK2=WHITE_H_ROOK_MOVE;
+                        }
+                        else
+                        {
+                            ROOK1=BLACK_A_ROOK_MOVE;
+                            ROOK2=BLACK_H_ROOK_MOVE;
+                        }
+
                         int des=map[i+l*dir[k][1]][j+l*dir[k][0]];
 
                         char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
@@ -186,12 +195,24 @@ int mate(char map[8][8], int player)
                         {
                             map[i][j]=piece;
                             map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
+
+                            if (player)
+                            {
+                                WHITE_A_ROOK_MOVE=ROOK1;
+                                WHITE_H_ROOK_MOVE=ROOK2;
+                            }
+                            else
+                            {
+                                BLACK_A_ROOK_MOVE=ROOK1;
+                                BLACK_H_ROOK_MOVE=ROOK2;
+                            }
+                            
                             return 0;
                         }
                     }      
                 }
 
-            if (piece == "B"+cap)
+            if (piece == 'B'+cap)
                 for (int k=0;k<4;k++)
                 {
                     for (int l=1;l<8 && VALID_POS(i+l*dir[k][1],j+l*dir[k][0]);l++)
@@ -209,7 +230,7 @@ int mate(char map[8][8], int player)
                     }      
                 }
 
-            if (piece == "Q"+cap)
+            if (piece == 'Q'+cap)
                 for (int k=0;k<8;k++)
                 {
                     for (int l=1;l<8 && VALID_POS(i+l*dir[k][1],j+l*dir[k][0]);l++)
@@ -227,7 +248,14 @@ int mate(char map[8][8], int player)
                     }      
                 }
         
-            if (piece == "K"+cap)
+            if (piece == 'K'+cap)
+            {
+                int KING;
+                if (player)
+                    KING=WHITE_KING_MOVE;
+                else
+                    KING=BLACK_KING_MOVE;
+
                 for (int k=0;k<8;k++)
                 {
                     if (!VALID_POS(i+dir[k][1],j+dir[k][0]))
@@ -241,10 +269,54 @@ int mate(char map[8][8], int player)
                     {
                         map[i][j]=piece;
                         map[i+dir[k][1]][j+dir[k][0]]=des;
+
+                        if (player)
+                            WHITE_KING_MOVE=KING;
+                        else
+                            BLACK_KING_MOVE=KING;
+
                         return 0;
                     }
-    
-                }       
+                }
+
+                if (move("o-o-o",map))
+                {
+                    map[buttom][2]='-';
+                    map[buttom][3]='-';
+                    map[buttom][0]='R'+cap;
+                    map[buttom][4]='K'+cap;
+
+                    if (player)
+                    {
+                        WHITE_KING_MOVE=0;
+                        WHITE_A_ROOK_MOVE=0;
+                    }
+                    else
+                    {
+                        BLACK_A_ROOK_MOVE=0;
+                        BLACK_KING_MOVE=0;
+                    }
+                }
+
+                if (move("o-o",map))
+                {
+                    map[buttom][5]='-';
+                    map[buttom][6]='-';
+                    map[buttom][7]='R'+cap;
+                    map[buttom][4]='K'+cap;
+
+                    if (player)
+                    {
+                        WHITE_KING_MOVE=0;
+                        WHITE_H_ROOK_MOVE=0;
+                    }
+                    else
+                    {
+                        BLACK_H_ROOK_MOVE=0;
+                        BLACK_KING_MOVE=0;
+                    }
+                }
+            }       
             
 
             if (piece == 'P'+cap)
@@ -254,7 +326,15 @@ int mate(char map[8][8], int player)
                     if (!VALID_POS(i+forward,j+k))
                         continue;
 
+                    int EN_STATE;
+                    if (player)
+                        EN_STATE=BLACK_EN;
+                    else
+                        EN_STATE=WHITE_EN;
+
                     int des=map[i+forward][j+k];
+                    //记录可能的过路兵
+                    int try=map[i][j+k];
 
                     char str[5]={'a'+j,'8'-i,'a'+j+k,'8'-i-forward,'\0'};
 
@@ -262,9 +342,34 @@ int mate(char map[8][8], int player)
                     {
                         map[i][j]=piece;
                         map[i+forward][j+k]=des;
+                        map[i][j+k]=try;
+
+                        if (player)
+                            BLACK_EN=EN_STATE;
+                        else
+                            WHITE_EN=EN_STATE;
+
                         return 0;
                     }
                 }
+
+                //2 square
+                if (VALID_POS(i+forward*2,j))
+                {
+                    int des=map[i+2*forward][j];
+
+                    char str[5]={'a'+j,'8'-i,'a'+j,'8'-i-2*forward,'\0'};
+
+                    if (move(str,map))
+                    {
+                        map[i][j]=piece;
+                        map[i+forward*2][j]=des;
+
+                        return 0;
+                    }
+                }
+
+
             }
         }
     }

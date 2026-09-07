@@ -13,9 +13,7 @@
  *
  * 行棋方:
  *   - curr = 1 表示轮到白方,curr = 0 表示轮到黑方。
- *   - 注意:board_print() 每次调用都会把 curr 取反——它既是
- *     “轮到谁走”,也被复用来决定打印时以哪一方视角朝下;
- *     因此若在游戏主循环中打印棋盘,行棋方会自动切换,请勿再手动翻转 curr。
+ *     “轮到谁走”,也被复用来决定打印时以哪一方视角朝下;。
  */
 
 // 1 for white to play, 0 for black.
@@ -29,10 +27,10 @@ extern char temp_board[8][8];
 
 /*
  * 以当前行棋方(curr)视角打印整张棋盘(白方视角 a1 在左下,
- * 黑方视角 h8 在左下),打印结束后会把 curr 取反(见文件头注释)。
+ * 黑方视角 h8 在左下)。
  *   map: 要打印的棋盘(通常传 board)。
  */
-void board_print(char map[8][8]);
+void board_print(char map[8][8],int player);
 
 /*
  * 把 sou 棋盘整体复制到 des(8×8 全量拷贝)。
@@ -51,5 +49,5 @@ int check(char map[8][8], int player);
  *   map:    棋盘;player: 1 = 白方,0 = 黑方。
  *   返回:   1 = 无,0 = 有。
  */
-int mate(char map[8][8], int player);
+int legal_move(char map[8][8], int player);
 #endif
