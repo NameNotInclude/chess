@@ -1,0 +1,53 @@
+//only white
+
+success short
+
+e2e4
+f1d3
+g1f3
+o-o
+
+moved rook for short
+
+e2e4
+f1d3
+g1f3
+h1g1
+g1h1
+o-o
+
+moved rook for short
+
+e2e4
+f1d3
+g1f3
+e1f1
+f1e1
+o-o
+
+success long
+
+b1c3
+d2d4
+c1e3
+d1d2
+O-O-O
+
+moved rook for long
+
+b1c3
+d2d4
+c1e3
+d1d2
+a1b1
+b1a1
+O-O-O
+
+moved king for short
+b1c3
+d2d4
+c1e3
+d1d2
+e1d1
+d1e1
+o-o-o

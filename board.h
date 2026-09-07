@@ -11,14 +11,7 @@
  *        map[7] = 第 1 横线(白方底线)
  *   - 列下标 0~7 对应 a~h 文件。
  *   - 格内字符:大写字母 = 白方棋子,小写字母 = 黑方棋子,'-' = 空位。
- *
- * 行棋方:
- *   - curr = 1 表示轮到白方,curr = 0 表示轮到黑方。
- *     “轮到谁走”,也被复用来决定打印时以哪一方视角朝下;。
  */
-
-// 1 for white to play, 0 for black.
-extern int curr;
 
 // 当前对局棋盘(开局为标准初始局面)。
 extern char board[8][8];
@@ -50,5 +43,5 @@ int check(char map[8][8], int player);
  *   map:    棋盘;player: 1 = 白方,0 = 黑方。
  *   返回:   1 = 无,0 = 有。
  */
-int legal_move(char map[8][8], int player);
+int no_legal_move(char map[8][8], int player);
 #endif

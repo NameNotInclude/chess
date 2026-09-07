@@ -34,9 +34,9 @@ void board_print(char map[8][8],int player)
             printf("%d  ",8-i);
             for (int j=0;j<8;j++)
                 printf("%c ",map[i][j]);
-            printf("\n\n");
+            printf("\n");
         }
-        printf("   a b c d e f g h\n");
+        printf("\n   a b c d e f g h\n");
     }
 
     else
@@ -46,9 +46,9 @@ void board_print(char map[8][8],int player)
             printf("%d  ",i+1);
             for (int j=0;j<8;j++)
                 printf("%c ",map[7-i][7-j]);
-            printf("\n\n");
+            printf("\n");
         }
-        printf("   h g f e d c b a\n");
+        printf("\n   h g f e d c b a\n");
     }
 }
 
@@ -136,7 +136,7 @@ int check(char map[8][8], int player)
     return 0;
 }
 
-int legal_move(char map[8][8], int player)
+int no_legal_move(char map[8][8], int player)
 {
     int dir[8][2]={{1,1},{1,-1},{-1,1},{-1,-1},{1,0},{0,1},{-1,0},{0,-1}};
     int night[8][2]={{1,2},{1,-2},{-1,2},{-1,-2},{2,1},{2,-1},{-2,1},{-2,-1}};
@@ -227,8 +227,6 @@ int legal_move(char map[8][8], int player)
         
             if (piece == 'K'+cap)
             {
-                int KING;
-
                 for (int k=0;k<8;k++)
                 {
                     if (!VALID_POS(i+dir[k][1],j+dir[k][0]))
@@ -254,6 +252,7 @@ int legal_move(char map[8][8], int player)
                     map[buttom][0]='R'+cap;
                     map[buttom][4]='K'+cap;
 
+                    return 0;
                 }
 
                 if (move("o-o",map,player))
@@ -263,6 +262,7 @@ int legal_move(char map[8][8], int player)
                     map[buttom][7]='R'+cap;
                     map[buttom][4]='K'+cap;
 
+                    return 0;
                 }
             }       
             
@@ -285,7 +285,6 @@ int legal_move(char map[8][8], int player)
                         map[i][j]=piece;
                         map[i+forward][j+k]=des;
                         map[i][j+k]=try;
-
 
                         return 0;
                     }

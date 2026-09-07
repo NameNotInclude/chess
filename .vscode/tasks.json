@@ -7,9 +7,11 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${file}",
+                "${workspaceFolder}/main.c",
+                "${workspaceFolder}/board.c",
+                "${workspaceFolder}/piece.c",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${workspaceFolder}/chess"
             ],
             "options": {
                 "cwd": "${fileDirname}"

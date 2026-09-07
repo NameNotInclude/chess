@@ -2,9 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include "board.h"
+#include "piece.h"
 
-#define IS_LETTER(x) ((x)>='a' && (x)<='z')
+#define IS_LETTER(x) ((x)>='a' && (x)<='h')
 #define IS_NUM(x) (((x)>='1' && (x)<='8'))
+
+#define INVA_MOVE 0
+#define NOR_MOVE 1
+#define ENPASS 2
+#define PAWN_2 3
+#define KING_MOVE 4
+#define ROOK_MOVE 5
+#define O_O_O 6
+#define O_O 7
 
 typedef struct n
 {
@@ -15,26 +25,30 @@ typedef struct n
     int result;//1 for white win, -1 for black win, 0 for draw, 114514 for unsettle
 }node;
 
-typedef struct state
-{
-    int WHITE_KING_MOVE;
-    int BLACK_KING_MOVE;
-
-    int WHITE_A_ROOK_MOVE;
-    int WHITE_H_ROOK_MOVE;
-    int BLACK_A_ROOK_MOVE;
-    int BLACK_H_ROOK_MOVE;
-
-    int WHITE_EN;
-    int BLACK_EN;
-}State;
-
 State pState={0,0,0,0,0,0,-2,-2};
 
-int valid_move(char* move, char map[8][8], int player)
+void State_Print(void)
+{
+    printf("Game state:\n");
+    printf("  WHITE_KING_MOVE   = %d  (white king has moved)\n", pState.WHITE_KING_MOVE);
+    printf("  BLACK_KING_MOVE   = %d  (black king has moved)\n", pState.BLACK_KING_MOVE);
+    printf("  WHITE_A_ROOK_MOVE = %d  (white rook from a1 has moved)\n", pState.WHITE_A_ROOK_MOVE);
+    printf("  WHITE_H_ROOK_MOVE = %d  (white rook from h1 has moved)\n", pState.WHITE_H_ROOK_MOVE);
+    printf("  BLACK_A_ROOK_MOVE = %d  (black rook from a8 has moved)\n", pState.BLACK_A_ROOK_MOVE);
+    printf("  BLACK_H_ROOK_MOVE = %d  (black rook from h8 has moved)\n", pState.BLACK_H_ROOK_MOVE);
+
+    printf("  WHITE_EN          = %d  (black may capture en passant on file %c; -2 means none)\n",
+        pState.WHITE_EN,
+        pState.WHITE_EN >= 0 && pState.WHITE_EN < 8 ? 'a' + pState.WHITE_EN : '-');
+    printf("  BLACK_EN          = %d  (white may capture en passant on file %c; -2 means none)\n",
+        pState.BLACK_EN,
+        pState.BLACK_EN >= 0 && pState.BLACK_EN < 8 ? 'a' + pState.BLACK_EN : '-');
+}
+
+int valid_move(const char *move, char map[8][8], int player)
 {
     if (move == NULL || strlen(move) < 4)
-        return 0;
+        return INVA_MOVE;
 
     int from_row = 7 - (move[1] - '1');
     int from_col = move[0] - 'a';
@@ -43,50 +57,49 @@ int valid_move(char* move, char map[8][8], int player)
 
     if (from_row < 0 || from_row > 7 || from_col < 0 || from_col > 7 ||
         to_row   < 0 || to_row   > 7 || to_col   < 0 || to_col   > 7)
-        return 0;
+        return INVA_MOVE;
 
     char type = map[from_row][from_col];
 
     //move your own piece
     if (player == 1 && !(type >= 'A' && type <= 'Z'))
-        return 0;
+        return INVA_MOVE;
 
     if (player == 0 && !(type >= 'a' && type <= 'z'))
-        return 0;
+        return INVA_MOVE;
 
     if (type == '-')
-        return 0;
+        return INVA_MOVE;
 
     int dx = abs(to_col - from_col);
     int dy = abs(to_row - from_row);
 
-    if (dx == 0 && dy == 0) return 0;
+    if (dx == 0 && dy == 0) return INVA_MOVE;
 
     //black pawn to move
     if (type == 'p')
     {
         //backward
         if (to_row - from_row <= 0)
-            return 0;
+            return INVA_MOVE;
 
         //move 2 square
         if (from_row == 1 && dx == 0 && to_row - from_row == 2 && map[to_row][to_col] == '-' && map[from_row + 1][to_col] == '-')
-            return 1;
+            return PAWN_2;
 
         //move 1 square
         if (dx == 0 && to_row - from_row == 1 && map[to_row][to_col] == '-')
-            return 1;
+            return NOR_MOVE;
 
         //take piece
         if (dx == 1 && dy == 1 && to_row - from_row == 1 && map[to_row][to_col] >= 'A' && map[to_row][to_col] <= 'Z')
-            return 1;
+            return NOR_MOVE;
 
         //enpassant
-        if (dx == 1 && dy == 1 && to_row - from_row == 1 && from_row == 4 &&
-            to_col == pState.WHITE_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'P')
-            return 2;
+        if (dx == 1 && dy == 1 && to_row - from_row == 1 && from_row == 4 && to_col == pState.WHITE_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'P')
+            return ENPASS;
 
-        return 0;
+        return INVA_MOVE;
     }
 
     //black rook to move
@@ -100,7 +113,7 @@ int valid_move(char* move, char map[8][8], int player)
                 int step = (to_row < from_row) ? -1 : 1;
                 for (int i = from_row + step; i != to_row; i += step)
                     if (map[i][from_col] != '-')
-                        return 0;
+                        return INVA_MOVE;
             }
 
             //move horizontally
@@ -109,15 +122,15 @@ int valid_move(char* move, char map[8][8], int player)
                 int step = (to_col < from_col) ? -1 : 1;
                 for (int i = from_col + step; i != to_col; i += step)
                     if (map[from_row][i] != '-')
-                        return 0;
+                        return INVA_MOVE;
             }
 
             if (map[to_row][to_col] >= 'a' && map[to_row][to_col] <= 'z')
-                return 0;
-            return 1;
+                return INVA_MOVE;
+            return ROOK_MOVE;
         }
 
-        return 0;
+        return INVA_MOVE;
     }
 
     //black knight to move
@@ -126,11 +139,11 @@ int valid_move(char* move, char map[8][8], int player)
         if ((dx == 2 && dy == 1) || (dx == 1 && dy == 2))
         {
             if (map[to_row][to_col] >= 'a' && map[to_row][to_col] <= 'z')
-                return 0;
-            return 1;
+                return INVA_MOVE;
+            return NOR_MOVE;
         }
         else
-            return 0;
+            return INVA_MOVE;
     }
 
     //black bishop to move
@@ -146,16 +159,16 @@ int valid_move(char* move, char map[8][8], int player)
             while (x != to_col && y != to_row)
             {
                 if (map[y][x] != '-')
-                    return 0;
+                    return INVA_MOVE;
                 x += step_x;
                 y += step_y;
             }
 
             if (map[to_row][to_col] >= 'a' && map[to_row][to_col] <= 'z')
-                return 0;
-            return 1;
+                return INVA_MOVE;
+            return NOR_MOVE;
         }
-        return 0;
+        return INVA_MOVE;
     }
 
     //black queen to move
@@ -172,14 +185,14 @@ int valid_move(char* move, char map[8][8], int player)
             while (x != to_col && y != to_row)
             {
                 if (map[y][x] != '-')
-                    return 0;
+                    return INVA_MOVE;
                 x += step_x;
                 y += step_y;
             }
 
             if (map[to_row][to_col] >= 'a' && map[to_row][to_col] <= 'z')
-                return 0;
-            return 1;
+                return INVA_MOVE;
+            return NOR_MOVE;
         }
 
         if (dx == 0 || dy == 0)
@@ -190,7 +203,7 @@ int valid_move(char* move, char map[8][8], int player)
                 int step = (to_row < from_row) ? -1 : 1;
                 for (int i = from_row + step; i != to_row; i += step)
                     if (map[i][from_col] != '-')
-                        return 0;
+                        return INVA_MOVE;
             }
 
             //move horizontally
@@ -199,15 +212,15 @@ int valid_move(char* move, char map[8][8], int player)
                 int step = (to_col < from_col) ? -1 : 1;
                 for (int i = from_col + step; i != to_col; i += step)
                     if (map[from_row][i] != '-')
-                        return 0;
+                        return INVA_MOVE;
             }
 
             if (map[to_row][to_col] >= 'a' && map[to_row][to_col] <= 'z')
-                return 0;
-            return 1;
+                return INVA_MOVE;
+            return NOR_MOVE;
         }
 
-        return 0;
+        return INVA_MOVE;
     }
 
     //black king to move
@@ -216,12 +229,12 @@ int valid_move(char* move, char map[8][8], int player)
         if ((dy == 1 && dx == 0) || (dy == 0 && dx == 1) || (dx == 1 && dy == 1))
         {
             if (map[to_row][to_col] >= 'a' && map[to_row][to_col] <= 'z')
-                return 0;
+                return INVA_MOVE;
 
-            return 1;
+            return KING_MOVE;
         }
         else
-            return 0;
+            return INVA_MOVE;
     }
 
     //white pawn to move
@@ -229,26 +242,26 @@ int valid_move(char* move, char map[8][8], int player)
     {
         //backward
         if (to_row - from_row >= 0)
-            return 0;
+            return INVA_MOVE;
 
         //move 2 square
         if (from_row == 6 && dx == 0 && to_row - from_row == -2 && map[to_row][to_col] == '-' && map[from_row - 1][to_col] == '-')
-            return 1;
+            return PAWN_2;
 
         //move 1 square
         if (dx == 0 && to_row - from_row == -1 && map[to_row][to_col] == '-')
-            return 1;
+            return NOR_MOVE;
 
         //take piece
         if (dx == 1 && dy == 1 && to_row - from_row == -1 && map[to_row][to_col] >= 'a' && map[to_row][to_col] <= 'z')
-            return 1;
+            return NOR_MOVE;
 
         //enpassant
         if (dx == 1 && dy == 1 && to_row - from_row == -1 && from_row == 3 &&
             to_col == pState.BLACK_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'p')
-            return 2;
+            return ENPASS;
 
-        return 0;
+        return INVA_MOVE;
     }
 
     //white rook to move
@@ -262,7 +275,7 @@ int valid_move(char* move, char map[8][8], int player)
                 int step = (to_row < from_row) ? -1 : 1;
                 for (int i = from_row + step; i != to_row; i += step)
                     if (map[i][from_col] != '-')
-                        return 0;
+                        return INVA_MOVE;
             }
 
             //move horizontally
@@ -271,16 +284,16 @@ int valid_move(char* move, char map[8][8], int player)
                 int step = (to_col < from_col) ? -1 : 1;
                 for (int i = from_col + step; i != to_col; i += step)
                     if (map[from_row][i] != '-')
-                        return 0;
+                        return INVA_MOVE;
             }
 
             if (map[to_row][to_col] >= 'A' && map[to_row][to_col] <= 'Z')
-                return 0;
+                return INVA_MOVE;
 
-            return 1;
+            return ROOK_MOVE;
         }
 
-        return 0;
+        return INVA_MOVE;
     }
 
     //white knight to move
@@ -289,11 +302,11 @@ int valid_move(char* move, char map[8][8], int player)
         if ((dx == 2 && dy == 1) || (dx == 1 && dy == 2))
         {
             if (map[to_row][to_col] >= 'A' && map[to_row][to_col] <= 'Z')
-                return 0;
-            return 1;
+                return INVA_MOVE;
+            return NOR_MOVE;
         }
         else
-            return 0;
+            return INVA_MOVE;
     }
 
     //white bishop to move
@@ -309,16 +322,16 @@ int valid_move(char* move, char map[8][8], int player)
             while (x != to_col && y != to_row)
             {
                 if (map[y][x] != '-')
-                    return 0;
+                    return INVA_MOVE;
                 x += step_x;
                 y += step_y;
             }
 
             if (map[to_row][to_col] >= 'A' && map[to_row][to_col] <= 'Z')
-                return 0;
-            return 1;
+                return INVA_MOVE;
+            return NOR_MOVE;
         }
-        return 0;
+        return INVA_MOVE;
     }
 
     //white queen to move
@@ -335,14 +348,14 @@ int valid_move(char* move, char map[8][8], int player)
             while (x != to_col && y != to_row)
             {
                 if (map[y][x] != '-')
-                    return 0;
+                    return INVA_MOVE;
                 x += step_x;
                 y += step_y;
             }
 
             if (map[to_row][to_col] >= 'A' && map[to_row][to_col] <= 'Z')
-                return 0;
-            return 1;
+                return INVA_MOVE;
+            return NOR_MOVE;
         }
 
         if (dx == 0 || dy == 0)
@@ -353,7 +366,7 @@ int valid_move(char* move, char map[8][8], int player)
                 int step = (to_row < from_row) ? -1 : 1;
                 for (int i = from_row + step; i != to_row; i += step)
                     if (map[i][from_col] != '-')
-                        return 0;
+                        return INVA_MOVE;
             }
 
             //move horizontally
@@ -362,15 +375,15 @@ int valid_move(char* move, char map[8][8], int player)
                 int step = (to_col < from_col) ? -1 : 1;
                 for (int i = from_col + step; i != to_col; i += step)
                     if (map[from_row][i] != '-')
-                        return 0;
+                        return INVA_MOVE;
             }
 
             if (map[to_row][to_col] >= 'A' && map[to_row][to_col] <= 'Z')
-                return 0;
-            return 1;
+                return INVA_MOVE;
+            return NOR_MOVE;
         }
 
-        return 0;
+        return INVA_MOVE;
     }
 
     //white king to move
@@ -379,16 +392,17 @@ int valid_move(char* move, char map[8][8], int player)
         if ((dy == 1 && dx == 0) || (dx == 1 && dy == 0) || (dx == 1 && dy == 1))
         {
             if (map[to_row][to_col] >= 'A' && map[to_row][to_col] <= 'Z')
-                return 0;
-            return 1;
+                return INVA_MOVE;
+
+            return KING_MOVE;
         }
         else
-            return 0;
+            return INVA_MOVE;
     }
     
-    return 0;
+    return INVA_MOVE;
 }
-int move(char ctrl[6], char map[8][8], int player)
+int move(const char *ctrl, char map[8][8], int player)
 {
     int cap = player?0:32;
     int buttom = player?7:0;
@@ -437,7 +451,7 @@ int move(char ctrl[6], char map[8][8], int player)
         map[buttom][0]='-';
         map[buttom][4]='-';
         
-        return 1;
+        return O_O_O;
     }
  
     //short castle
@@ -482,7 +496,7 @@ int move(char ctrl[6], char map[8][8], int player)
         map[buttom][4]='-';
         map[buttom][7]='-';
 
-        return 1;
+        return O_O;
     }
 
     //normal move
@@ -499,9 +513,9 @@ int move(char ctrl[6], char map[8][8], int player)
         if (result == 0)
             return 0;     
 
-        int ep_captured = 0;
+        char ep_captured;
         //吃过路兵
-        if (result == 2)
+        if (result == ENPASS)
         {
             ep_captured = map[from[0]][to[1]];
             map[from[0]][to[1]] = '-';
@@ -515,10 +529,36 @@ int move(char ctrl[6], char map[8][8], int player)
             //回滚送将操作
             map[from[0]][from[1]] = piece;
             map[to[0]][to[1]] = dest;
-            if (result == 2)
+            if (result == ENPASS)
                 map[from[0]][to[1]] = ep_captured;
             return 0;
+        } 
+
+        if (piece == 'P'+cap && to[0] == 7-buttom)
+        {
+            char p;
+            printf("Choose to promote:\n");
+            scanf(" %c ",&p);
+
+            while (p!='q' && p!='r' && p!='b' && p!='n'
+                && p!='Q' && p!='R' && p!='B' && p!='N')
+                scanf(" %c ",&p);
+            
+            if (p>='a' && p<='z') 
+                map[to[0]][to[1]] = p -32 + cap;
+
+            else 
+                map[to[0]][to[1]] = p + cap;
         }
+
+        if (result == PAWN_2)
+            return -to[1];
+
+        if (result == KING_MOVE)
+            return KING_MOVE;
+
+        if (result == ROOK_MOVE)
+            return 100+from[0]*10+from[1];
 
         return 1;
     }
@@ -527,7 +567,93 @@ int move(char ctrl[6], char map[8][8], int player)
     else
         return 0;
 }
-void State_Update(int comm, int player)
+void State_Update(int comm ,int player)
 {
+    if (comm == KING_MOVE)
+    {
+        if (player)
+        {
+            pState.BLACK_EN=-2;
+            pState.WHITE_KING_MOVE=1;
+        }
+        else
+        {
+            pState.WHITE_EN=-2;
+            pState.BLACK_KING_MOVE=1;
+        }
+    }   
+    if (comm < 0)
+    {
+        if (player)
+        {
+            pState.WHITE_EN=-comm;
+            pState.BLACK_EN=-2;
+        }
+        else
+        {
+            pState.WHITE_EN=-2;
+            pState.BLACK_EN=-comm;
+        }
+    }
+    if (comm > 100)
+    {
+        if (player)
+        {
+            if (comm%10 == 7 && comm/10%10 == 7)
+                pState.WHITE_H_ROOK_MOVE=1;
+            
+            else if (comm%10 == 0 && comm/10%10 == 7)
+                pState.WHITE_A_ROOK_MOVE=1;
 
+            pState.BLACK_EN=-2;
+        }
+
+        else
+        {
+            if (comm%10 == 7 && comm/10%10 == 0)
+                pState.BLACK_H_ROOK_MOVE=1;
+            
+            else if (comm%10 == 0 && comm/10%10 == 0)
+                pState.BLACK_A_ROOK_MOVE=1;
+
+            pState.WHITE_EN=-2;
+        }
+    }
+    if (comm == NOR_MOVE)
+    {
+        if (player)
+            pState.BLACK_EN=-2;
+        else
+            pState.WHITE_EN=-2;
+    }
+    if (comm == O_O_O)
+    {
+        if (player)
+        {
+            pState.WHITE_KING_MOVE=1;
+            pState.WHITE_A_ROOK_MOVE=1;
+            pState.BLACK_EN=-2;
+        }
+        else
+        {
+            pState.BLACK_KING_MOVE=1;
+            pState.BLACK_A_ROOK_MOVE=1;
+            pState.WHITE_EN=-2;
+        }
+    }
+    if (comm == O_O)
+    {
+        if (player)
+        {
+            pState.WHITE_KING_MOVE=1;
+            pState.WHITE_H_ROOK_MOVE=1;
+            pState.BLACK_EN=-2;
+        }
+        else
+        {
+            pState.BLACK_KING_MOVE=1;
+            pState.BLACK_H_ROOK_MOVE=1;
+            pState.WHITE_EN=-2;
+        }
+    }
 }
