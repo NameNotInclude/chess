@@ -1,6 +1,7 @@
 #ifndef BOARD_H
 #define BOARD_H
 
+
 /*
  * board.h —— 棋盘状态与基础工具模块(board.c)的公共接口
  *

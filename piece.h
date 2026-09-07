@@ -41,7 +41,7 @@ extern int BLACK_EN;
  *   move: 形如 "e2e4" 的普通走法字符串;
  *   返回: 0 = 非法,非 0 = 合法。
  */
-int valid_move(char* move, char map[8][8]);
+int valid_move(char* move, char map[8][8], int player);
 
 /*
  * 执行一步棋(普通走法、吃过路兵或易位)。
@@ -50,6 +50,8 @@ int valid_move(char* move, char map[8][8]);
  *   说明: 兵到达底线会自动升变为后(暂不支持选子);
  *         函数内部不负责切换行棋方 curr(由调用方维护)。
  */
-int move(char ctrl[6], char map[8][8]);
+int move(char ctrl[6], char map[8][8], int player);
+
+void State_Update(int comm, int player)
 
 #endif /* PIECE_H */

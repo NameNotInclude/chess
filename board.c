@@ -161,7 +161,7 @@ int legal_move(char map[8][8], int player)
 
                     char str[5]={'a'+j,'8'-i,'a'+j+night[k][0],'8'-i-night[k][1],'\0'};
 
-                    if (move(str,map))
+                    if (move(str,map,player))
                     {
                         map[i][j]=piece;
                         map[i+night[k][1]][j+night[k][0]]=des;  
@@ -175,37 +175,14 @@ int legal_move(char map[8][8], int player)
                 {
                     for (int l=1;l<8 && VALID_POS(i+l*dir[k][1],j+l*dir[k][0]);l++)
                     {
-                        int ROOK1,ROOK2;
-                        if (player)
-                        {
-                            ROOK1=WHITE_A_ROOK_MOVE;
-                            ROOK2=WHITE_H_ROOK_MOVE;
-                        }
-                        else
-                        {
-                            ROOK1=BLACK_A_ROOK_MOVE;
-                            ROOK2=BLACK_H_ROOK_MOVE;
-                        }
-
                         int des=map[i+l*dir[k][1]][j+l*dir[k][0]];
 
                         char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
 
-                        if (move(str,map))
+                        if (move(str,map,player))
                         {
                             map[i][j]=piece;
                             map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
-
-                            if (player)
-                            {
-                                WHITE_A_ROOK_MOVE=ROOK1;
-                                WHITE_H_ROOK_MOVE=ROOK2;
-                            }
-                            else
-                            {
-                                BLACK_A_ROOK_MOVE=ROOK1;
-                                BLACK_H_ROOK_MOVE=ROOK2;
-                            }
                             
                             return 0;
                         }
@@ -221,7 +198,7 @@ int legal_move(char map[8][8], int player)
 
                         char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
 
-                        if (move(str,map))
+                        if (move(str,map,player))
                         {
                             map[i][j]=piece;
                             map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
@@ -239,7 +216,7 @@ int legal_move(char map[8][8], int player)
 
                         char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
 
-                        if (move(str,map))
+                        if (move(str,map,player))
                         {
                             map[i][j]=piece;
                             map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
@@ -251,10 +228,6 @@ int legal_move(char map[8][8], int player)
             if (piece == 'K'+cap)
             {
                 int KING;
-                if (player)
-                    KING=WHITE_KING_MOVE;
-                else
-                    KING=BLACK_KING_MOVE;
 
                 for (int k=0;k<8;k++)
                 {
@@ -265,56 +238,31 @@ int legal_move(char map[8][8], int player)
 
                     char str[5]={'a'+j,'8'-i,'a'+j+dir[k][0],'8'-i-dir[k][1],'\0'};
 
-                    if (move(str,map))
+                    if (move(str,map,player))
                     {
                         map[i][j]=piece;
                         map[i+dir[k][1]][j+dir[k][0]]=des;
-
-                        if (player)
-                            WHITE_KING_MOVE=KING;
-                        else
-                            BLACK_KING_MOVE=KING;
 
                         return 0;
                     }
                 }
 
-                if (move("o-o-o",map))
+                if (move("o-o-o",map,player))
                 {
                     map[buttom][2]='-';
                     map[buttom][3]='-';
                     map[buttom][0]='R'+cap;
                     map[buttom][4]='K'+cap;
 
-                    if (player)
-                    {
-                        WHITE_KING_MOVE=0;
-                        WHITE_A_ROOK_MOVE=0;
-                    }
-                    else
-                    {
-                        BLACK_A_ROOK_MOVE=0;
-                        BLACK_KING_MOVE=0;
-                    }
                 }
 
-                if (move("o-o",map))
+                if (move("o-o",map,player))
                 {
                     map[buttom][5]='-';
                     map[buttom][6]='-';
                     map[buttom][7]='R'+cap;
                     map[buttom][4]='K'+cap;
 
-                    if (player)
-                    {
-                        WHITE_KING_MOVE=0;
-                        WHITE_H_ROOK_MOVE=0;
-                    }
-                    else
-                    {
-                        BLACK_H_ROOK_MOVE=0;
-                        BLACK_KING_MOVE=0;
-                    }
                 }
             }       
             
@@ -326,28 +274,18 @@ int legal_move(char map[8][8], int player)
                     if (!VALID_POS(i+forward,j+k))
                         continue;
 
-                    int EN_STATE;
-                    if (player)
-                        EN_STATE=BLACK_EN;
-                    else
-                        EN_STATE=WHITE_EN;
-
                     int des=map[i+forward][j+k];
                     //记录可能的过路兵
                     int try=map[i][j+k];
 
                     char str[5]={'a'+j,'8'-i,'a'+j+k,'8'-i-forward,'\0'};
 
-                    if (move(str,map))
+                    if (move(str,map,player))
                     {
                         map[i][j]=piece;
                         map[i+forward][j+k]=des;
                         map[i][j+k]=try;
 
-                        if (player)
-                            BLACK_EN=EN_STATE;
-                        else
-                            WHITE_EN=EN_STATE;
 
                         return 0;
                     }
@@ -360,7 +298,7 @@ int legal_move(char map[8][8], int player)
 
                     char str[5]={'a'+j,'8'-i,'a'+j,'8'-i-2*forward,'\0'};
 
-                    if (move(str,map))
+                    if (move(str,map,player))
                     {
                         map[i][j]=piece;
                         map[i+forward*2][j]=des;
