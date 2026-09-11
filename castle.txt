@@ -51,3 +51,16 @@ d1d2
 e1d1
 d1e1
 o-o-o
+
+in check //black & white
+g2g3
+b7b6
+f1g2
+c8a6
+e2e4
+e7e5
+g1f3
+b8c6
+o-o  //invalid
+d2d3
+d8e7

@@ -10,7 +10,7 @@ int main()
 
     while (1)
     {
-        State_Print();
+        //State_Print();
         board_print(temp_board,player);
         
 
@@ -46,7 +46,7 @@ int main()
         State_Update(re,player);
 
         system("clear");
-        //player=!player;
+        player=!player;
     }
 
     free(ctrl);

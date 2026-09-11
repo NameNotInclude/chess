@@ -7,15 +7,6 @@
 int player = 1;
 
 //                    a   b   c   d   e   f   g   h 
-char board[8][8] = {{'r','n','b','q','k','b','n','r'},//8
-                    {'p','p','p','p','p','p','p','p'},//7
-                    {'-','-','-','-','-','-','-','-'},//6
-                    {'-','-','-','-','-','-','-','-'},//5
-                    {'-','-','-','-','-','-','-','-'},//4
-                    {'-','-','-','-','-','-','-','-'},//3
-                    {'P','P','P','P','P','P','P','P'},//2
-                    {'R','N','B','Q','K','B','N','R'}};//1
-
 char temp_board[8][8] = {{'r','n','b','q','k','b','n','r'},
                          {'p','p','p','p','p','p','p','p'},
                          {'-','-','-','-','-','-','-','-'},
@@ -33,7 +24,17 @@ void board_print(char map[8][8],int player)
         {
             printf("%d  ",8-i);
             for (int j=0;j<8;j++)
-                printf("%c ",map[i][j]);
+            {
+                if (map[i][j]=='-')
+                {
+                    if ((i+j)%2==0)
+                        printf("· ");
+                    else 
+                        printf("- ");
+                }
+                else
+                    printf("%c ",map[i][j]);
+            }
             printf("\n");
         }
         printf("\n   a b c d e f g h\n");
@@ -45,7 +46,17 @@ void board_print(char map[8][8],int player)
         {
             printf("%d  ",i+1);
             for (int j=0;j<8;j++)
-                printf("%c ",map[7-i][7-j]);
+            {
+                if (map[7-i][7-j]=='-')
+                {
+                    if ((14-i-j)%2==0)
+                        printf("· ");
+                    else 
+                        printf("- ");
+                }
+                else
+                    printf("%c ",map[7-i][7-j]);
+            }
             printf("\n");
         }
         printf("\n   h g f e d c b a\n");
