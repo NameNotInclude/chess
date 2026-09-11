@@ -3,6 +3,7 @@
 #include <string.h>
 #include "board.h"
 #include "piece.h"
+#include "game.h"
 
 #define IS_LETTER(x) ((x)>='a' && (x)<='h')
 #define IS_NUM(x) (((x)>='1' && (x)<='8'))
@@ -15,15 +16,8 @@
 #define ROOK_MOVE 5
 #define O_O_O 6
 #define O_O 7
-
-typedef struct n
-{
-    char* move;
-    char piece;
-    struct n* next;
-    struct n* varr;
-    int result;//1 for white win, -1 for black win, 0 for draw, 114514 for unsettle
-}node;
+#define PAWN_MOVE 8
+#define CAPTURE 9
 
 State pState={0,0,0,0,0,0,-2,-2};
 
@@ -89,11 +83,11 @@ int valid_move(const char *move, char map[8][8], int player)
 
         //move 1 square
         if (dx == 0 && to_row - from_row == 1 && map[to_row][to_col] == '-')
-            return NOR_MOVE;
+            return PAWN_MOVE;
 
         //take piece
         if (dx == 1 && dy == 1 && to_row - from_row == 1 && map[to_row][to_col] >= 'A' && map[to_row][to_col] <= 'Z')
-            return NOR_MOVE;
+            return PAWN_MOVE;
 
         //enpassant
         if (dx == 1 && dy == 1 && to_row - from_row == 1 && from_row == 4 && to_col == pState.WHITE_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'P')
@@ -250,11 +244,11 @@ int valid_move(const char *move, char map[8][8], int player)
 
         //move 1 square
         if (dx == 0 && to_row - from_row == -1 && map[to_row][to_col] == '-')
-            return NOR_MOVE;
+            return PAWN_MOVE;
 
         //take piece
         if (dx == 1 && dy == 1 && to_row - from_row == -1 && map[to_row][to_col] >= 'a' && map[to_row][to_col] <= 'z')
-            return NOR_MOVE;
+            return PAWN_MOVE;
 
         //enpassant
         if (dx == 1 && dy == 1 && to_row - from_row == -1 && from_row == 3 &&
@@ -404,6 +398,7 @@ int valid_move(const char *move, char map[8][8], int player)
 }
 int move(const char *ctrl, char map[8][8], int player)
 {
+
     int cap = player?0:32;
     int buttom = player?7:0;
 
@@ -521,6 +516,10 @@ int move(const char *ctrl, char map[8][8], int player)
             map[from[0]][to[1]] = '-';
         }
 
+        int capture=0;
+        if (map[to[0]][to[1]] != '-')
+            capture=1;
+
         map[from[0]][from[1]] = '-';
         map[to[0]][to[1]] = piece;
 
@@ -531,14 +530,17 @@ int move(const char *ctrl, char map[8][8], int player)
             map[to[0]][to[1]] = dest;
             if (result == ENPASS)
                 map[from[0]][to[1]] = ep_captured;
-            return 0;
+            return INVA_MOVE;
         } 
+
+        
 
         if (piece == 'P'+cap && to[0] == 7-buttom)
         {
             char p;
             printf("Choose to promote:\n");
-            scanf(" %c ",&p);
+            getchar();
+            scanf("%c",&p);
 
             while (p!='q' && p!='r' && p!='b' && p!='n'
                 && p!='Q' && p!='R' && p!='B' && p!='N')
@@ -550,6 +552,8 @@ int move(const char *ctrl, char map[8][8], int player)
             else 
                 map[to[0]][to[1]] = p + cap;
         }
+        if (result == ENPASS)
+            return ENPASS;
 
         if (result == PAWN_2)
             return -to[1];
@@ -559,6 +563,9 @@ int move(const char *ctrl, char map[8][8], int player)
 
         if (result == ROOK_MOVE)
             return 100+from[0]*10+from[1];
+
+        if (capture==1)
+            return CAPTURE;
 
         return 1;
     }

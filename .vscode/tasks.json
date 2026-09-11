@@ -10,6 +10,7 @@
                 "${workspaceFolder}/main.c",
                 "${workspaceFolder}/board.c",
                 "${workspaceFolder}/piece.c",
+                "${workspaceFolder}/game.c",
                 "-o",
                 "${workspaceFolder}/chess"
             ],

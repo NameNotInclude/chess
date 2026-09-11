@@ -31,17 +31,4 @@ void board_print(char map[8][8],int player);
  */
 void cp_board(char sou[8][8], char des[8][8]);
 
-/*
- * 判断 player 的王是否正被对方将军。
- *   map:    棋盘;player: 1 = 白方,0 = 黑方。
- *   返回:   1 = 被将军,0 = 未被将军。
- */
-int check(char map[8][8], int player);
-
-/*
-* 判断 player是不是无合法步骤
- *   map:    棋盘;player: 1 = 白方,0 = 黑方。
- *   返回:   1 = 无,0 = 有。
- */
-int no_legal_move(char map[8][8], int player);
 #endif

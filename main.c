@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "board.h"
 #include "piece.h"
+#include "game.h"
 
 int main()
 {

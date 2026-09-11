@@ -28,9 +28,10 @@ typedef struct state
 
     int WHITE_EN;
     int BLACK_EN;
+
 }State;
 
-extern State pState;
+
 
 /*
  * 判断 move 所指走法是否合法(只读,不修改棋盘)。
