@@ -70,3 +70,5 @@ void cp_board(char sou[8][8], char des[8][8])
             des[i][j]=sou[i][j];
 }
 
+
+

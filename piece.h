@@ -45,7 +45,9 @@ int valid_move(const char *move, char map[8][8], int player);
  *   ctrl: 见文件头注释的着法格式;
  *   返回: 1 = 走法合法并已写入 map;0 = 非法(此时 map 不被改动)。
  */
-int move(const char *ctrl, char map[8][8], int player);
+int move(const char *ctrl, char map[8][8], int player, int try);
+
+char* transform(char map[8][8], const char* ctrl, int player, int capture, int check, int mate, char prom);
 
 /*
  * 更新棋子状态(王移动、车移动、过路兵)
@@ -55,5 +57,6 @@ void State_Update(int comm, int player);
 
 /* 打印当前对局状态，供调试使用。 */
 void State_Print(void);
+
 
 #endif /* PIECE_H */

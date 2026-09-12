@@ -7,6 +7,7 @@
 
 #define IS_LETTER(x) ((x)>='a' && (x)<='h')
 #define IS_NUM(x) (((x)>='1' && (x)<='8'))
+#define VALID_POS(x,y) ((x)>=0 && (x)<8 && (y)>=0 && (y)<8)
 
 #define INVA_MOVE 0
 #define NOR_MOVE 1
@@ -20,6 +21,7 @@
 #define CAPTURE 9
 
 State pState={0,0,0,0,0,0,-2,-2};
+
 
 void State_Print(void)
 {
@@ -63,7 +65,7 @@ int valid_move(const char *move, char map[8][8], int player)
         return INVA_MOVE;
 
     if (type == '-')
-        return INVA_MOVE;
+        return INVA_MOVE;  
 
     int dx = abs(to_col - from_col);
     int dy = abs(to_row - from_row);
@@ -396,7 +398,7 @@ int valid_move(const char *move, char map[8][8], int player)
     
     return INVA_MOVE;
 }
-int move(const char *ctrl, char map[8][8], int player)
+int move(const char *ctrl, char map[8][8], int player, int try)
 {
 
     int cap = player?0:32;
@@ -531,13 +533,15 @@ int move(const char *ctrl, char map[8][8], int player)
             if (result == ENPASS)
                 map[from[0]][to[1]] = ep_captured;
             return INVA_MOVE;
-        } 
-
+        }
+        
         
 
+        
+        char p;
         if (piece == 'P'+cap && to[0] == 7-buttom)
         {
-            char p;
+            
             printf("Choose to promote:\n");
             getchar();
             scanf("%c",&p);
@@ -552,6 +556,16 @@ int move(const char *ctrl, char map[8][8], int player)
             else 
                 map[to[0]][to[1]] = p + cap;
         }
+
+        if (try==1)
+        {
+            int c=check(map,!player);
+            int mate=c && no_legal_move(map,!player);
+            char prom=(piece == 'P'+cap && to[0] == 7-buttom)?p:' ';
+
+            printf("%s\n",transform(map,ctrl,player,capture,c,mate,prom));
+        }
+
         if (result == ENPASS)
             return ENPASS;
 
@@ -564,8 +578,6 @@ int move(const char *ctrl, char map[8][8], int player)
         if (result == ROOK_MOVE)
             return 100+from[0]*10+from[1];
 
-        if (capture==1)
-            return CAPTURE;
 
         return 1;
     }
@@ -663,4 +675,264 @@ void State_Update(int comm ,int player)
             pState.WHITE_EN=-2;
         }
     }
+}
+char* transform(char map[8][8], const char* ctrl, int player, int capture, int check, int mate, char prom)
+{
+    if (strcmp(ctrl,"o-o-o")==0 || strcmp(ctrl,"O-O-O"))
+    {
+        if (mate==1)
+        {
+            static char result[7]="O-O-O#";
+            return result;
+        }
+        if (check==1)
+        {
+            static char result[7]="O-O-O+";
+            return result;
+        }
+        else
+        {
+            static char result[6]="O-O-O";
+            return result;
+        }
+    }
+    if (strcmp(ctrl,"o-o")==0 || strcmp(ctrl,"O-O"))
+    {
+        if (mate==1)
+        {
+            static char result[7]="O-O#";
+            return result;
+        }
+        if (check==1)
+        {
+            static char result[7]="O-O+";
+            return result;
+        }
+        else
+        {
+            static char result[6]="O-O";
+            return result;
+        }
+    }
+
+    int from[2]={8-(ctrl[1]-'0'),ctrl[0]-'a'};
+    int to[2]={8-(ctrl[3]-'0'),ctrl[2]-'a'};
+
+    int dir[8][2]={{1,1},{1,-1},{-1,1},{-1,-1},{1,0},{0,1},{-1,0},{0,-1}};
+    int night[8][2]={{1,2},{1,-2},{-1,2},{-1,-2},{2,1},{2,-1},{-2,1},{-2,-1}};
+
+    int cap=player?0:32;
+    int buttom=player?0:7;
+
+    char piece=map[from[0]][from[1]];
+    if (piece=='P'+cap)
+    {
+        static char result[8];
+        int top=0;
+
+        if (capture==1)
+        {
+            result[top++]=ctrl[0];
+            result[top++]='x';
+        }
+        result[top++]=ctrl[2];
+        result[top++]=ctrl[3];
+
+        if (to[0]==buttom)
+        {
+            result[top++]='=';
+            result[top++]=prom;
+        }
+
+        if (mate==1)
+            result[top++]='#';
+        else if (check==1)
+            result[top++]='+';
+
+        result[top++]='\0';
+
+        return result;
+    }
+    if (piece=='N'+cap)
+    {
+        static char result[8];
+        int top=0;
+
+        result[top++]='N';
+        int col=1,row=1;
+        for (int i=0;i<8;i++)
+        {
+            if (VALID_POS(from[0]-night[i][0],from[1]-night[i][1]) && map[from[0]-night[i][0]][from[1]-night[i][1]]=='N'+cap)
+            {
+                if (from[1]!=from[1]-night[i][1])
+                    col=0;
+                if (from[0]!=from[0]-night[i][0])
+                    row=0;
+            }
+        }
+        if (col == 0)
+            result[top++]=ctrl[0];
+        if (row == 0)
+            result[top++]=ctrl[1];
+
+        if (capture == 1)
+            result[top++]='x';
+        
+        result[top++]=ctrl[2];
+        result[top++]=ctrl[3];
+
+        if (mate == 1)
+            result[top++]='#';
+        else if (check==1)
+            result[top++]='+';
+
+        result[top++]='\0';
+        return result;
+    }
+    if (piece=='R'+cap)
+    {
+        static char result[8];
+        int top=0;
+
+        result[top++]='R';
+        int col=1,row=1;
+        for(int i=4;i<8;i++)
+        {
+            int x_i=from[0]+dir[i][0];
+            int y_i=from[1]+dir[i][1];
+            while (VALID_POS(x_i,y_i) && map[x_i][y_i]!='R'+cap);
+
+            if (map[x_i][y_i]=='R'+cap)
+            {
+                if (x_i==from[0])
+                    row=0;
+                if (y_i==from[1])
+                    col=0;
+            }
+        }
+        if (col == 0)
+            result[top++]=ctrl[0];
+        if (row == 0)
+            result[top++]=ctrl[1];
+
+        if (capture == 1)
+            result[top++]='x';
+        
+        result[top++]=ctrl[2];
+        result[top++]=ctrl[3];    
+
+        if (mate == 1)
+            result[top++]='#';
+        else if (check==1)
+            result[top++]='+';
+
+        result[top++]='\0';
+        return result;
+    }
+    if (piece=='B'+cap)
+    {
+        static char result[8];
+        int top=0;
+
+        result[top++]='B';
+        int col=1,row=1;
+        for(int i=0;i<4;i++)
+        {
+            int x_i=from[0]+dir[i][0];
+            int y_i=from[1]+dir[i][1];
+            while (VALID_POS(x_i,y_i) && map[x_i][y_i]!='R'+cap);
+
+            if (map[x_i][y_i]=='R'+cap)
+            {
+                if (x_i==from[0])
+                    row=0;
+                if (y_i==from[1])
+                    col=0;
+            }
+        }
+        if (col == 0)
+            result[top++]=ctrl[0];
+        if (row == 0)
+            result[top++]=ctrl[1];
+
+        if (capture == 1)
+            result[top++]='x';
+        
+        result[top++]=ctrl[2];
+        result[top++]=ctrl[3];    
+
+        if (mate == 1)
+            result[top++]='#';
+        else if (check==1)
+            result[top++]='+';
+
+        result[top++]='\0';
+        return result;
+    }
+    if (piece=='Q'+cap)
+    {
+        static char result[8];
+        int top=0;
+
+        result[top++]='Q';
+        int col=1,row=1;
+        for(int i=0;i<8;i++)
+        {
+            int x_i=from[0]+dir[i][0];
+            int y_i=from[1]+dir[i][1];
+            while (VALID_POS(x_i,y_i) && map[x_i][y_i]!='R'+cap);
+
+            if (map[x_i][y_i]=='R'+cap)
+            {
+                if (x_i==from[0])
+                    row=0;
+                if (y_i==from[1])
+                    col=0;
+            }
+        }
+        if (col == 0)
+            result[top++]=ctrl[0];
+        if (row == 0)
+            result[top++]=ctrl[1];
+
+        if (capture == 1)
+            result[top++]='x';
+        
+        result[top++]=ctrl[2];
+        result[top++]=ctrl[3];    
+
+        if (mate == 1)
+            result[top++]='#';
+        else if (check==1)
+            result[top++]='+';
+
+        result[top++]='\0';
+        return result;
+    }
+    if (piece=='K'+cap)
+    {
+        static char result[6];
+        int top=0;
+
+        result[top++]='K';
+
+        if (capture == 1)
+            result[top++]='x';
+        
+        result[top++]=ctrl[2];
+        result[top++]=ctrl[3];    
+
+        if (mate == 1)
+            result[top++]='#';
+        else if (check==1)
+            result[top++]='+';
+
+        result[top++]='\0';
+        return result;
+    }
+
+    /* 兜底:未识别的棋子类型,返回原始着法串(避免函数末尾无返回值) */
+    static char result[8];
+    snprintf(result, sizeof result, "%s", ctrl);
+    return result;
 }

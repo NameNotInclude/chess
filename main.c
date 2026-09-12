@@ -35,10 +35,10 @@ int main()
         }
     
         int re;
-        printf("%d\n",re);
+        //printf("%d\n",re);
 
         scanf("%5s",ctrl);
-        while (!(re=move(ctrl,temp_board,player)))
+        while (!(re=move(ctrl,temp_board,player,1)))
         {
             printf("Invalid\n");
             scanf("%5s",ctrl);

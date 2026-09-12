@@ -3,16 +3,17 @@
 
 typedef struct node
 {
-    int turn;
+    int turn;  //比赛回合
 
-    char* detail_move;
-    char* move;
+    char* detail_move;  //详细的招法：如e2e4
+    char* move;   //标准记法：如Nf3
     
-    struct node* next;
-    struct node* prev;
+    struct node* next;  //下一招
+    struct node* prev;  //上一招
 
-    struct node* next_varr;
-    struct node* prev_varr;
+    //分析棋局时，可以对同一个局面采用不同的走法
+    struct node* next_varr;  //下一个变例
+    struct node* prev_varr;  //上一个变例
 }Move;
 
 typedef Move* MPtr;
@@ -37,5 +38,18 @@ int check(char map[8][8], int player);
  */
 int no_legal_move(char map[8][8], int player);
 
+/*
+ * 把一步着法追加到棋谱主变的末尾(挂在 M->last 之后)。
+ *   ctrl : 程序输入格式的着法,如 "e2e4";易位为 "o-o" / "O-O-O";
+ *          兵升变可以写成 5 个字符,如 "e7e8q"(第 5 位是升变子);
+ *   piece: 被移动的棋子(用于识别兵升变;不需要时传 0);
+ *   turn : 该着法由哪一方走出,1 = 白方,0 = 黑方。
+ *
+ * 记录内容:
+ *   detail_move —— 完整保留调用方传入的着法串(含升变子),可用于回放;
+ *   move        —— 存的是标准代数记法(SAN)。
+ */
+Record* init(void);
+void record(Record* M, char* ctrl, char piece, int turn);
 
 #endif
