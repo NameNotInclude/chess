@@ -3,8 +3,6 @@
 
 typedef struct node
 {
-    int turn;  //比赛回合
-
     char* detail_move;  //详细的招法：如e2e4
     char* move;   //标准记法：如Nf3
     
@@ -50,6 +48,6 @@ int no_legal_move(char map[8][8], int player);
  *   move        —— 存的是标准代数记法(SAN)。
  */
 Record* init(void);
-void record(Record* M, char* ctrl, char piece, int turn);
-
+void add(Record* M,char* ctrl,char* stan);
+void free_record(Record* M);
 #endif

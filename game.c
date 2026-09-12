@@ -110,7 +110,7 @@ int no_legal_move(char map[8][8], int player)
 
                     char str[5]={'a'+j,'8'-i,'a'+j+night[k][0],'8'-i-night[k][1],'\0'};
 
-                    if (move(str,map,player))
+                    if (move(str,map,player,0))
                     {
                         map[i][j]=piece;
                         map[i+night[k][1]][j+night[k][0]]=des;  
@@ -128,7 +128,7 @@ int no_legal_move(char map[8][8], int player)
 
                         char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
 
-                        if (move(str,map,player))
+                        if (move(str,map,player,0))
                         {
                             map[i][j]=piece;
                             map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
@@ -147,7 +147,7 @@ int no_legal_move(char map[8][8], int player)
 
                         char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
 
-                        if (move(str,map,player))
+                        if (move(str,map,player,0))
                         {
                             map[i][j]=piece;
                             map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
@@ -165,7 +165,7 @@ int no_legal_move(char map[8][8], int player)
 
                         char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
 
-                        if (move(str,map,player))
+                        if (move(str,map,player,0))
                         {
                             map[i][j]=piece;
                             map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
@@ -185,7 +185,7 @@ int no_legal_move(char map[8][8], int player)
 
                     char str[5]={'a'+j,'8'-i,'a'+j+dir[k][0],'8'-i-dir[k][1],'\0'};
 
-                    if (move(str,map,player))
+                    if (move(str,map,player,0))
                     {
                         map[i][j]=piece;
                         map[i+dir[k][1]][j+dir[k][0]]=des;
@@ -194,7 +194,7 @@ int no_legal_move(char map[8][8], int player)
                     }
                 }
 
-                if (move("o-o-o",map,player))
+                if (move("o-o-o",map,player,0))
                 {
                     map[buttom][2]='-';
                     map[buttom][3]='-';
@@ -204,7 +204,7 @@ int no_legal_move(char map[8][8], int player)
                     return 0;
                 }
 
-                if (move("o-o",map,player))
+                if (move("o-o",map,player,0))
                 {
                     map[buttom][5]='-';
                     map[buttom][6]='-';
@@ -229,7 +229,7 @@ int no_legal_move(char map[8][8], int player)
 
                     char str[5]={'a'+j,'8'-i,'a'+j+k,'8'-i-forward,'\0'};
 
-                    if (move(str,map,player))
+                    if (move(str,map,player,0))
                     {
                         map[i][j]=piece;
                         map[i+forward][j+k]=des;
@@ -246,7 +246,7 @@ int no_legal_move(char map[8][8], int player)
 
                     char str[5]={'a'+j,'8'-i,'a'+j,'8'-i-2*forward,'\0'};
 
-                    if (move(str,map,player))
+                    if (move(str,map,player,0))
                     {
                         map[i][j]=piece;
                         map[i+forward*2][j]=des;
@@ -269,7 +269,6 @@ Record* init(void)
     if (head == NULL)
         return NULL;
 
-    head->turn=0;
     head->detail_move=NULL;
     head->move=NULL;
     head->prev=NULL;
@@ -288,51 +287,49 @@ Record* init(void)
 
     return result;
 }
-
-
-void record(Record* M, char* ctrl, char piece, int turn)
+void add(Record* M,char* ctrl,char* stan)
 {
-    if (M == NULL || ctrl == NULL)
+    if (M == NULL)
         return;
 
-    size_t len = strlen(ctrl);
-    if (len == 0)
-        return;
-
-    MPtr newnode=(MPtr)calloc(1, sizeof(Move));
+    MPtr newnode = (MPtr)calloc(1, sizeof(Move));
     if (newnode == NULL)
         return;
 
-    newnode->turn=turn;
+    newnode->move=stan;
+    newnode->detail_move=ctrl;
 
-    newnode->detail_move=(char*)malloc(len + 1);
-    if (newnode->detail_move == NULL)
-    {
-        free(newnode);
-        return;
-    }
-    memcpy(newnode->detail_move, ctrl, len + 1);
-
-    int is_promo = ((piece=='p' || piece=='P') && len == 5);
-    size_t mlen = is_promo ? 4 : len;
-
-    newnode->move=(char*)malloc(mlen + 1);
-    if (newnode->move == NULL)
-    {
-        free(newnode->detail_move);
-        free(newnode);
-        return;
-    }
-    for (size_t i = 0; i < mlen; i++)
-        newnode->move[i]=(char)tolower((unsigned char)ctrl[i]);
-    newnode->move[mlen]='\0';
-
-    /* 挂到主变末尾:维护双向链表与 Record::last */
     newnode->prev=M->last;
     newnode->next=NULL;
     newnode->next_varr=NULL;
     newnode->prev_varr=NULL;
 
     M->last->next=newnode;
-    M->last=newnode;
+    M->last=newnode;   /* 关键:尾指针必须前移,否则下一次 add 会覆盖同一个 next 并丢失旧节点 */
 }
+
+/*
+ * 释放整份棋谱:主变链上的每个节点,以及节点持有的 detail_move / move 字符串。
+ * 说明:变例链(next_varr / prev_varr)目前没有使用;若以后要用,
+ *       这里需要一并遍历释放。
+ */
+void free_record(Record* M)
+{
+    if (M == NULL)
+        return;
+
+    MPtr p = M->head;
+    while (p != NULL)
+    {
+        MPtr nextnode = p->next;
+
+        free(p->detail_move);
+        free(p->move);
+        free(p);
+
+        p = nextnode;
+    }
+
+    free(M);
+}
+

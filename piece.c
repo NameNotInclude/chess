@@ -400,7 +400,7 @@ int valid_move(const char *move, char map[8][8], int player)
     
     return INVA_MOVE;
 }
-int move(const char *ctrl, char map[8][8], int player)
+int move(const char *ctrl, char map[8][8], int player ,  int try)
 {
 
     int cap = player?0:32;
@@ -450,10 +450,18 @@ int move(const char *ctrl, char map[8][8], int player)
         map[buttom][0]='-';
         map[buttom][4]='-';
 
-        c=check(map,!player);
-        mate=c && no_legal_move(map,!player);
-        prom=0;
-        capture=0;
+        if (try==1)
+        {
+            /* 同普通走法:只在真实走子时更新细节变量 */
+            int step_c=check(map,!player);
+            int no_move=0;
+            if (step_c)
+                no_move=no_legal_move(map,!player);
+            c=step_c;
+            mate=step_c && no_move;
+            prom=0;
+            capture=0;
+        }
         
         return O_O_O;
     }
@@ -500,10 +508,18 @@ int move(const char *ctrl, char map[8][8], int player)
         map[buttom][4]='-';
         map[buttom][7]='-';
 
-        c=check(map,!player);
-        mate=c && no_legal_move(map,!player);
-        prom=0;
-        capture=0;
+        if (try==1)
+        {
+            /* 同普通走法:只在真实走子时更新细节变量 */
+            int step_c=check(map,!player);
+            int no_move=0;
+            if (step_c)
+                no_move=no_legal_move(map,!player);
+            c=step_c;
+            mate=step_c && no_move;
+            prom=0;
+            capture=0;
+        }
 
         return O_O;
     }
@@ -530,10 +546,6 @@ int move(const char *ctrl, char map[8][8], int player)
             map[from[0]][to[1]] = '-';
         }
 
-        int capture=0;
-        if (map[to[0]][to[1]] != '-')
-            capture=1;
-
         map[from[0]][from[1]] = '-';
         map[to[0]][to[1]] = piece;
 
@@ -548,16 +560,15 @@ int move(const char *ctrl, char map[8][8], int player)
         }
         
         char p=0;
-        if (piece == 'P'+cap && to[0] == 7-buttom)
+        if (piece == 'P'+cap && to[0] == 7-buttom && try==1)
         {
             
             printf("Choose to promote:\n");
-            getchar();
             scanf("%c",&p);
 
             while (p!='q' && p!='r' && p!='b' && p!='n'
                 && p!='Q' && p!='R' && p!='B' && p!='N')
-                scanf(" %c ",&p);
+                scanf("%c",&p);
             
             if (p>='a' && p<='z') 
                 map[to[0]][to[1]] = p -32 + cap;
@@ -566,10 +577,20 @@ int move(const char *ctrl, char map[8][8], int player)
                 map[to[0]][to[1]] = p + cap;
         }
 
-        c=check(map,!player);
-        mate=c && no_legal_move(map,!player);
-        prom=p;
-        capture= dest=='-'?0:1;
+        if (try==1)
+        {
+            /* 试走(try==0)绝不能改写这些全局细节变量,否则会把真实着法的结果冲掉;
+               no_legal_move 内部只做试走,这里先用局部变量算好,再统一写回 */
+            int step_c=check(map,!player);
+            int no_move=0;
+            if (step_c)
+                no_move=no_legal_move(map,!player);
+            c=step_c;
+            mate=step_c && no_move;
+            prom=(p>='a' && p<='z') ? (char)(p-32) : p;    /* 未升变时为 0 */
+            capture=(dest!='-' || result==ENPASS) ? 1 : 0; /* 吃过路兵也算吃子 */
+        }
+
 
         if (result == ENPASS)
             return ENPASS;
@@ -682,7 +703,7 @@ void State_Update(int comm ,int player)
 }
 char* transform(char map[8][8], const char* ctrl, int player, int capture, int check, int mate, char prom)
 {
-    if (strcmp(ctrl,"o-o-o")==0 || strcmp(ctrl,"O-O-O"))
+    if (strcmp(ctrl,"o-o-o")==0 || strcmp(ctrl,"O-O-O")==0)
     {
         if (mate==1)
         {
@@ -703,7 +724,7 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
             return result;
         }
     }
-    if (strcmp(ctrl,"o-o")==0 || strcmp(ctrl,"O-O"))
+    if (strcmp(ctrl,"o-o")==0 || strcmp(ctrl,"O-O")==0)
     {
         if (mate==1)
         {
@@ -734,7 +755,10 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
     int cap=player?0:32;
     int buttom=player?0:7;
 
-    char piece=map[from[0]][from[1]];
+    char piece=map[to[0]][to[1]];
+    if (prom!=0)                     /* 升变:落点上是升变后的棋子,按兵处理 */
+        piece='P'+cap;
+
     if (piece=='P'+cap)
     {
         char* result=(char*)malloc(sizeof(char)*8);
@@ -748,10 +772,10 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
         result[top++]=ctrl[2];
         result[top++]=ctrl[3];
 
-        if (to[0]==buttom)
+        if (to[0]==buttom && prom!=0)
         {
             result[top++]='=';
-            result[top++]=prom;
+            result[top++]=(prom>='a' && prom<='z') ? (char)(prom-32) : prom;
         }
 
         if (mate==1)
@@ -770,15 +794,22 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
 
         result[top++]='N';
         int col=1,row=1;
+        int same_file=0,same_rank=0,amb=0;
         for (int i=0;i<8;i++)
         {
-            if (VALID_POS(from[0]-night[i][0],from[1]-night[i][1]) && map[from[0]-night[i][0]][from[1]-night[i][1]]=='N'+cap)
-            {
-                if (from[1]!=from[1]-night[i][1])
-                    col=0;
-                if (from[0]!=from[0]-night[i][0])
-                    row=0;
-            }
+            int x_i=to[0]-night[i][0];
+            int y_i=to[1]-night[i][1];
+            if (!VALID_POS(x_i,y_i) || map[x_i][y_i]!='N'+cap)
+                continue;
+            amb=1;
+            if (y_i==from[1]) same_file=1;
+            if (x_i==from[0]) same_rank=1;
+        }
+        if (amb)
+        {
+            if (!same_file)      { col=0; row=1; }  /* 文件唯一:写文件 */
+            else if (!same_rank) { col=1; row=0; }  /* 文件相同:写行号 */
+            else                 { col=0; row=0; }  /* 都不唯一:文件+行号 */
         }
         if (col == 0)
             result[top++]=ctrl[0];
@@ -806,19 +837,29 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
 
         result[top++]='R';
         int col=1,row=1;
+        int same_file=0,same_rank=0,amb=0;
         for(int i=4;i<8;i++)
         {
-            int x_i=from[0]+dir[i][0];
-            int y_i=from[1]+dir[i][1];
-            while (VALID_POS(x_i,y_i) && map[x_i][y_i]!='R'+cap);
-
-            if (map[x_i][y_i]=='R'+cap)
+            int x_i=to[0]+dir[i][0];
+            int y_i=to[1]+dir[i][1];
+            while (VALID_POS(x_i,y_i) && map[x_i][y_i]=='-')
             {
-                if (x_i==from[0])
-                    row=0;
-                if (y_i==from[1])
-                    col=0;
+                x_i+=dir[i][0];
+                y_i+=dir[i][1];
             }
+
+            if (VALID_POS(x_i,y_i) && map[x_i][y_i]=='R'+cap)
+            {
+                amb=1;
+                if (y_i==from[1]) same_file=1;
+                if (x_i==from[0]) same_rank=1;
+            }
+        }
+        if (amb)
+        {
+            if (!same_file)      { col=0; row=1; }
+            else if (!same_rank) { col=1; row=0; }
+            else                 { col=0; row=0; }
         }
         if (col == 0)
             result[top++]=ctrl[0];
@@ -846,19 +887,29 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
 
         result[top++]='B';
         int col=1,row=1;
+        int same_file=0,same_rank=0,amb=0;
         for(int i=0;i<4;i++)
         {
-            int x_i=from[0]+dir[i][0];
-            int y_i=from[1]+dir[i][1];
-            while (VALID_POS(x_i,y_i) && map[x_i][y_i]!='R'+cap);
-
-            if (map[x_i][y_i]=='R'+cap)
+            int x_i=to[0]+dir[i][0];
+            int y_i=to[1]+dir[i][1];
+            while (VALID_POS(x_i,y_i) && map[x_i][y_i]=='-')
             {
-                if (x_i==from[0])
-                    row=0;
-                if (y_i==from[1])
-                    col=0;
+                x_i+=dir[i][0];
+                y_i+=dir[i][1];
             }
+
+            if (VALID_POS(x_i,y_i) && map[x_i][y_i]=='B'+cap)
+            {
+                amb=1;
+                if (y_i==from[1]) same_file=1;
+                if (x_i==from[0]) same_rank=1;
+            }
+        }
+        if (amb)
+        {
+            if (!same_file)      { col=0; row=1; }
+            else if (!same_rank) { col=1; row=0; }
+            else                 { col=0; row=0; }
         }
         if (col == 0)
             result[top++]=ctrl[0];
@@ -886,19 +937,29 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
 
         result[top++]='Q';
         int col=1,row=1;
+        int same_file=0,same_rank=0,amb=0;
         for(int i=0;i<8;i++)
         {
-            int x_i=from[0]+dir[i][0];
-            int y_i=from[1]+dir[i][1];
-            while (VALID_POS(x_i,y_i) && map[x_i][y_i]!='R'+cap);
-
-            if (map[x_i][y_i]=='R'+cap)
+            int x_i=to[0]+dir[i][0];
+            int y_i=to[1]+dir[i][1];
+            while (VALID_POS(x_i,y_i) && map[x_i][y_i]=='-')
             {
-                if (x_i==from[0])
-                    row=0;
-                if (y_i==from[1])
-                    col=0;
+                x_i+=dir[i][0];
+                y_i+=dir[i][1];
             }
+
+            if (VALID_POS(x_i,y_i) && map[x_i][y_i]=='Q'+cap)
+            {
+                amb=1;
+                if (y_i==from[1]) same_file=1;
+                if (x_i==from[0]) same_rank=1;
+            }
+        }
+        if (amb)
+        {
+            if (!same_file)      { col=0; row=1; }
+            else if (!same_rank) { col=1; row=0; }
+            else                 { col=0; row=0; }
         }
         if (col == 0)
             result[top++]=ctrl[0];
@@ -942,8 +1003,9 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
         return result;
     }
 
-    /* 兜底:未识别的棋子类型,返回原始着法串(避免函数末尾无返回值) */
-    static char result[8];
-    snprintf(result, sizeof result, "%s", ctrl);
+    /* 兜底:未识别的棋子类型,返回原始着法串(main 会 free,必须是堆内存) */
+    char* result=(char*)malloc(sizeof(char)*(strlen(ctrl)+1));
+    if (result != NULL)
+        strcpy(result, ctrl);
     return result;
 }
