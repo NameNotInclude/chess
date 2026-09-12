@@ -4,6 +4,7 @@
 #include "piece.h"
 #include "game.h"
 
+
 int main()
 {
     int player=1;
@@ -15,7 +16,7 @@ int main()
         board_print(temp_board,player);
         
 
-        if (check(temp_board,player))
+        if (check(temp_board,player) )
         {
             printf("check");
 
@@ -38,11 +39,20 @@ int main()
         //printf("%d\n",re);
 
         scanf("%5s",ctrl);
-        while (!(re=move(ctrl,temp_board,player,1)))
+        while (!(re=move(ctrl,temp_board,player)))
         {
             printf("Invalid\n");
             scanf("%5s",ctrl);
         }
+
+        char* nor=transform(temp_board,ctrl,player,capture,c,mate,prom);
+        printf("%s\n",nor);
+
+        capture=0;
+        c=0;
+        mate=0;
+        prom=0;
+        free(nor);
         
         State_Update(re,player);
 

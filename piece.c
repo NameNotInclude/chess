@@ -22,6 +22,8 @@
 
 State pState={0,0,0,0,0,0,-2,-2};
 
+int mate=0,capture=0,c=0;
+char prom=0;
 
 void State_Print(void)
 {
@@ -398,7 +400,7 @@ int valid_move(const char *move, char map[8][8], int player)
     
     return INVA_MOVE;
 }
-int move(const char *ctrl, char map[8][8], int player, int try)
+int move(const char *ctrl, char map[8][8], int player)
 {
 
     int cap = player?0:32;
@@ -447,6 +449,11 @@ int move(const char *ctrl, char map[8][8], int player, int try)
         map[buttom][2]='K'+cap;
         map[buttom][0]='-';
         map[buttom][4]='-';
+
+        c=check(map,!player);
+        mate=c && no_legal_move(map,!player);
+        prom=0;
+        capture=0;
         
         return O_O_O;
     }
@@ -493,6 +500,11 @@ int move(const char *ctrl, char map[8][8], int player, int try)
         map[buttom][4]='-';
         map[buttom][7]='-';
 
+        c=check(map,!player);
+        mate=c && no_legal_move(map,!player);
+        prom=0;
+        capture=0;
+
         return O_O;
     }
 
@@ -535,10 +547,7 @@ int move(const char *ctrl, char map[8][8], int player, int try)
             return INVA_MOVE;
         }
         
-        
-
-        
-        char p;
+        char p=0;
         if (piece == 'P'+cap && to[0] == 7-buttom)
         {
             
@@ -557,14 +566,10 @@ int move(const char *ctrl, char map[8][8], int player, int try)
                 map[to[0]][to[1]] = p + cap;
         }
 
-        if (try==1)
-        {
-            int c=check(map,!player);
-            int mate=c && no_legal_move(map,!player);
-            char prom=(piece == 'P'+cap && to[0] == 7-buttom)?p:' ';
-
-            printf("%s\n",transform(map,ctrl,player,capture,c,mate,prom));
-        }
+        c=check(map,!player);
+        mate=c && no_legal_move(map,!player);
+        prom=p;
+        capture= dest=='-'?0:1;
 
         if (result == ENPASS)
             return ENPASS;
@@ -577,7 +582,6 @@ int move(const char *ctrl, char map[8][8], int player, int try)
 
         if (result == ROOK_MOVE)
             return 100+from[0]*10+from[1];
-
 
         return 1;
     }
@@ -682,17 +686,20 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
     {
         if (mate==1)
         {
-            static char result[7]="O-O-O#";
+            char* result=(char*)malloc(sizeof(char)*7);
+            strcpy(result,"O-O-O#");
             return result;
         }
         if (check==1)
         {
-            static char result[7]="O-O-O+";
+            char* result=(char*)malloc(sizeof(char)*7);
+            strcpy(result,"O-O-O+");
             return result;
         }
         else
         {
-            static char result[6]="O-O-O";
+            char* result=(char*)malloc(sizeof(char)*7);
+            strcpy(result,"O-O-O");
             return result;
         }
     }
@@ -700,17 +707,20 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
     {
         if (mate==1)
         {
-            static char result[7]="O-O#";
+            char* result=(char*)malloc(sizeof(char)*5);
+            strcpy(result,"O-O#");
             return result;
         }
         if (check==1)
         {
-            static char result[7]="O-O+";
+            char* result=(char*)malloc(sizeof(char)*5);
+            strcpy(result,"O-O+");
             return result;
         }
         else
         {
-            static char result[6]="O-O";
+            char* result=(char*)malloc(sizeof(char)*4);
+            strcpy(result,"O-O");
             return result;
         }
     }
@@ -727,7 +737,7 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
     char piece=map[from[0]][from[1]];
     if (piece=='P'+cap)
     {
-        static char result[8];
+        char* result=(char*)malloc(sizeof(char)*8);
         int top=0;
 
         if (capture==1)
@@ -755,7 +765,7 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
     }
     if (piece=='N'+cap)
     {
-        static char result[8];
+        char* result=(char*)malloc(sizeof(char)*8);
         int top=0;
 
         result[top++]='N';
@@ -791,7 +801,7 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
     }
     if (piece=='R'+cap)
     {
-        static char result[8];
+        char* result=(char*)malloc(sizeof(char)*8);
         int top=0;
 
         result[top++]='R';
@@ -831,7 +841,7 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
     }
     if (piece=='B'+cap)
     {
-        static char result[8];
+        char* result=(char*)malloc(sizeof(char)*8);
         int top=0;
 
         result[top++]='B';
@@ -871,7 +881,7 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
     }
     if (piece=='Q'+cap)
     {
-        static char result[8];
+        char* result=(char*)malloc(sizeof(char)*8);
         int top=0;
 
         result[top++]='Q';
@@ -911,7 +921,7 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
     }
     if (piece=='K'+cap)
     {
-        static char result[6];
+        char* result=(char*)malloc(sizeof(char)*6);
         int top=0;
 
         result[top++]='K';
@@ -928,6 +938,7 @@ char* transform(char map[8][8], const char* ctrl, int player, int capture, int c
             result[top++]='+';
 
         result[top++]='\0';
+
         return result;
     }
 

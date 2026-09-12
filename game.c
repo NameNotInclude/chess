@@ -11,7 +11,7 @@
 //check wether 'player' is in check, 1 for white, 0 for black
 int check(char map[8][8], int player)
 {   
-    int dir[8][2]={{1,1},{1,-1},{-1,1},{-1,-1},{1,0},{0,1},{-1,0},{0,-1}};
+    int dir[8][2]={{1,1},{1,-1},{-1,1},{-1,-1},{1},{0,1},{-1},{0,-1}};
     int night[8][2]={{1,2},{1,-2},{-1,2},{-1,-2},{2,1},{2,-1},{-2,1},{-2,-1}};
 
     char myking = player ? 'K' : 'k';   
@@ -87,7 +87,7 @@ int check(char map[8][8], int player)
 
 int no_legal_move(char map[8][8], int player)
 {
-    int dir[8][2]={{1,1},{1,-1},{-1,1},{-1,-1},{1,0},{0,1},{-1,0},{0,-1}};
+    int dir[8][2]={{1,1},{1,-1},{-1,1},{-1,-1},{1},{0,1},{-1},{0,-1}};
     int night[8][2]={{1,2},{1,-2},{-1,2},{-1,-2},{2,1},{2,-1},{-2,1},{-2,-1}};
     int forward=player?-1:1;
     int buttom=player?7:0;
@@ -110,7 +110,7 @@ int no_legal_move(char map[8][8], int player)
 
                     char str[5]={'a'+j,'8'-i,'a'+j+night[k][0],'8'-i-night[k][1],'\0'};
 
-                    if (move(str,map,player,0))
+                    if (move(str,map,player))
                     {
                         map[i][j]=piece;
                         map[i+night[k][1]][j+night[k][0]]=des;  
@@ -128,7 +128,7 @@ int no_legal_move(char map[8][8], int player)
 
                         char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
 
-                        if (move(str,map,player,0))
+                        if (move(str,map,player))
                         {
                             map[i][j]=piece;
                             map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
@@ -147,7 +147,7 @@ int no_legal_move(char map[8][8], int player)
 
                         char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
 
-                        if (move(str,map,player,0))
+                        if (move(str,map,player))
                         {
                             map[i][j]=piece;
                             map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
@@ -165,7 +165,7 @@ int no_legal_move(char map[8][8], int player)
 
                         char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
 
-                        if (move(str,map,player,0))
+                        if (move(str,map,player))
                         {
                             map[i][j]=piece;
                             map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
@@ -185,7 +185,7 @@ int no_legal_move(char map[8][8], int player)
 
                     char str[5]={'a'+j,'8'-i,'a'+j+dir[k][0],'8'-i-dir[k][1],'\0'};
 
-                    if (move(str,map,player,0))
+                    if (move(str,map,player))
                     {
                         map[i][j]=piece;
                         map[i+dir[k][1]][j+dir[k][0]]=des;
@@ -194,7 +194,7 @@ int no_legal_move(char map[8][8], int player)
                     }
                 }
 
-                if (move("o-o-o",map,player,0))
+                if (move("o-o-o",map,player))
                 {
                     map[buttom][2]='-';
                     map[buttom][3]='-';
@@ -204,7 +204,7 @@ int no_legal_move(char map[8][8], int player)
                     return 0;
                 }
 
-                if (move("o-o",map,player,0))
+                if (move("o-o",map,player))
                 {
                     map[buttom][5]='-';
                     map[buttom][6]='-';
@@ -229,7 +229,7 @@ int no_legal_move(char map[8][8], int player)
 
                     char str[5]={'a'+j,'8'-i,'a'+j+k,'8'-i-forward,'\0'};
 
-                    if (move(str,map,player,0))
+                    if (move(str,map,player))
                     {
                         map[i][j]=piece;
                         map[i+forward][j+k]=des;
@@ -246,7 +246,7 @@ int no_legal_move(char map[8][8], int player)
 
                     char str[5]={'a'+j,'8'-i,'a'+j,'8'-i-2*forward,'\0'};
 
-                    if (move(str,map,player,0))
+                    if (move(str,map,player))
                     {
                         map[i][j]=piece;
                         map[i+forward*2][j]=des;
