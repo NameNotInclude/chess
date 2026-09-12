@@ -453,7 +453,7 @@ int move(const char *ctrl, char map[8][8], int player, int try, State pState, in
             int step_c=check(map,!player);
             int no_move=0;
             if (step_c)
-                no_move=no_legal_move(map,!player);
+                no_move=no_legal_move(map,!player,pState);
             *c=step_c;
             *mate=step_c && no_move;
             *prom=0;
@@ -511,11 +511,11 @@ int move(const char *ctrl, char map[8][8], int player, int try, State pState, in
             int step_c=check(map,!player);
             int no_move=0;
             if (step_c)
-                no_move=no_legal_move(map,!player);
-            c=step_c;
-            mate=step_c && no_move;
-            prom=0;
-            capture=0;
+                no_move=no_legal_move(map,!player,pState);
+            *c=step_c;
+            *mate=step_c && no_move;
+            *prom=0;
+            *capture=0;
         }
 
         return O_O;
@@ -581,7 +581,7 @@ int move(const char *ctrl, char map[8][8], int player, int try, State pState, in
             int step_c=check(map,!player);
             int no_move=0;
             if (step_c)
-                no_move=no_legal_move(map,!player);
+                no_move=no_legal_move(map,!player,pState);
             *c=step_c;
             *mate=step_c && no_move;
             *prom=(p>='a' && p<='z') ? (char)(p-32) : p;    /* 未升变时为 0 */

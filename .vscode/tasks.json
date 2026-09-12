@@ -11,6 +11,7 @@
                 "${workspaceFolder}/board.c",
                 "${workspaceFolder}/piece.c",
                 "${workspaceFolder}/game.c",
+                "${workspaceFolder}/mode.c",
                 "-o",
                 "${workspaceFolder}/chess"
             ],

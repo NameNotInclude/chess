@@ -34,7 +34,7 @@ int check(char map[8][8], int player);
  *   map:    棋盘;player: 1 = 白方,0 = 黑方。
  *   返回:   1 = 无,0 = 有。
  */
-int no_legal_move(char map[8][8], int player);
+int no_legal_move(char map[8][8], int player, State pState);
 
 /*
  * 把一步着法追加到棋谱主变的末尾(挂在 M->last 之后)。
