@@ -20,12 +20,9 @@
 #define PAWN_MOVE 8
 #define CAPTURE 9
 
-State pState={0,0,0,0,0,0,-2,-2};
 
-int mate=0,capture=0,c=0;
-char prom=0;
 
-void State_Print(void)
+void State_Print(State pState)
 {
     printf("Game state:\n");
     printf("  WHITE_KING_MOVE   = %d  (white king has moved)\n", pState.WHITE_KING_MOVE);
@@ -43,7 +40,7 @@ void State_Print(void)
         pState.BLACK_EN >= 0 && pState.BLACK_EN < 8 ? 'a' + pState.BLACK_EN : '-');
 }
 
-int valid_move(const char *move, char map[8][8], int player)
+int valid_move(const char *move, char map[8][8], int player, State pState)
 {
     if (move == NULL || strlen(move) < 4)
         return INVA_MOVE;
@@ -400,7 +397,7 @@ int valid_move(const char *move, char map[8][8], int player)
     
     return INVA_MOVE;
 }
-int move(const char *ctrl, char map[8][8], int player ,  int try)
+int move(const char *ctrl, char map[8][8], int player, int try, State pState, int* c, int* mate, int* capture, char* prom)
 {
 
     int cap = player?0:32;
@@ -457,10 +454,10 @@ int move(const char *ctrl, char map[8][8], int player ,  int try)
             int no_move=0;
             if (step_c)
                 no_move=no_legal_move(map,!player);
-            c=step_c;
-            mate=step_c && no_move;
-            prom=0;
-            capture=0;
+            *c=step_c;
+            *mate=step_c && no_move;
+            *prom=0;
+            *capture=0;
         }
         
         return O_O_O;
@@ -533,7 +530,7 @@ int move(const char *ctrl, char map[8][8], int player ,  int try)
         int piece=map[from[0]][from[1]];
         int dest=map[to[0]][to[1]];
 
-        int result = valid_move(ctrl, map, player);
+        int result = valid_move(ctrl, map, player, pState);
 
         if (result == 0)
             return 0;     
@@ -585,10 +582,10 @@ int move(const char *ctrl, char map[8][8], int player ,  int try)
             int no_move=0;
             if (step_c)
                 no_move=no_legal_move(map,!player);
-            c=step_c;
-            mate=step_c && no_move;
-            prom=(p>='a' && p<='z') ? (char)(p-32) : p;    /* 未升变时为 0 */
-            capture=(dest!='-' || result==ENPASS) ? 1 : 0; /* 吃过路兵也算吃子 */
+            *c=step_c;
+            *mate=step_c && no_move;
+            *prom=(p>='a' && p<='z') ? (char)(p-32) : p;    /* 未升变时为 0 */
+            *capture=(dest!='-' || result==ENPASS) ? 1 : 0; /* 吃过路兵也算吃子 */
         }
 
 
@@ -611,7 +608,7 @@ int move(const char *ctrl, char map[8][8], int player ,  int try)
     else
         return 0;
 }
-void State_Update(int comm ,int player)
+void State_Update(int comm ,int player ,State pState)
 {
     if (comm == KING_MOVE)
     {

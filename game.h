@@ -48,6 +48,16 @@ int no_legal_move(char map[8][8], int player);
  *   move        —— 存的是标准代数记法(SAN)。
  */
 Record* init(void);
+
+/*
+ * 将新的一步添加到棋谱当中
+ *    ctrl :程序输入的招法
+ *    stan :标准代数记法
+ */
 void add(Record* M,char* ctrl,char* stan);
+
+/*
+ * 释放内存
+ */
 void free_record(Record* M);
 #endif
