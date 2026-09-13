@@ -38,7 +38,7 @@ Record* play(char board[8][8], State pState)
         }
     
         int re;
-        //printf("%d\n",re);
+        printf("%d\n",re);
 
         ctrl=(char*)malloc(sizeof(char)*6);
         scanf("%5s",ctrl);

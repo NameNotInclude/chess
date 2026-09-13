@@ -57,7 +57,9 @@ Record* init(void);
 void add(Record* M,char* ctrl,char* stan);
 
 /*
- * 释放内存
+ * 释放整份棋谱:主变链上的每个节点,以及节点持有的 detail_move / move 字符串。
+ * 说明:变例链(next_varr / prev_varr)目前没有使用;若以后要用,
+ *       这里需要一并遍历释放。
  */
 void free_record(Record* M);
 #endif

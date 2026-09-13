@@ -289,6 +289,7 @@ Record* init(void)
 
     return result;
 }
+
 void add(Record* M,char* ctrl,char* stan)
 {
     if (M == NULL)
@@ -310,11 +311,6 @@ void add(Record* M,char* ctrl,char* stan)
     M->last=newnode;   /* 关键:尾指针必须前移,否则下一次 add 会覆盖同一个 next 并丢失旧节点 */
 }
 
-/*
- * 释放整份棋谱:主变链上的每个节点,以及节点持有的 detail_move / move 字符串。
- * 说明:变例链(next_varr / prev_varr)目前没有使用;若以后要用,
- *       这里需要一并遍历释放。
- */
 void free_record(Record* M)
 {
     if (M == NULL)
