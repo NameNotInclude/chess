@@ -331,3 +331,28 @@ void free_record(Record* M)
     free(M);
 }
 
+void print_record(Record* M)
+{
+    if (M==NULL) 
+        return ;
+
+    MPtr check=M->head->next;
+
+    int i=1;
+    while(check)
+    {
+        printf("Move %d:\n",i);
+
+        MPtr varr_check=check;
+        int j=1;
+        while (varr_check)
+        {
+            printf("\tVarriant:%d Move:%s Standard move:%s\n",j,check->detail_move,check->move);
+            j++;
+            varr_check=varr_check->next_varr;
+        }
+        
+        i++;
+        check=check->next;
+    }
+}

@@ -13,7 +13,16 @@ int main()
 
     cp_board(init_board,board);
 
-    Record* m=play(board,pState);
+    Record* m=play(board,pState,1);
+
+    printf("%p\n",m);
+    print_record(m);
+
+    analysis(m);
+
+    print_record(m);
+
+    analysis(m);
 
     free_record(m);
     return 0;

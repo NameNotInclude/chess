@@ -62,4 +62,6 @@ void add(Record* M,char* ctrl,char* stan);
  *       这里需要一并遍历释放。
  */
 void free_record(Record* M);
+
+void print_record(Record* M);
 #endif
