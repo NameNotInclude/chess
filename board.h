@@ -13,12 +13,9 @@
  *   - 格内字符:大写字母 = 白方棋子,小写字母 = 黑方棋子,'-' = 空位。
  */
 
-// 当前对局棋盘(开局为标准初始局面)。
-extern char board[8][8];
-
-// 临时棋盘,供“试走/回滚”等场合复制/备份用。
 extern char temp_board[8][8];
-
+extern char init_board[8][8];
+extern char empty_board[8][8];
 /*
  * 以当前行棋方(curr)视角打印整张棋盘(白方视角 a1 在左下,
  * 黑方视角 h8 在左下)。
@@ -31,17 +28,4 @@ void board_print(char map[8][8],int player);
  */
 void cp_board(char sou[8][8], char des[8][8]);
 
-/*
- * 判断 player 的王是否正被对方将军。
- *   map:    棋盘;player: 1 = 白方,0 = 黑方。
- *   返回:   1 = 被将军,0 = 未被将军。
- */
-int check(char map[8][8], int player);
-
-/*
-* 判断 player是不是无合法步骤
- *   map:    棋盘;player: 1 = 白方,0 = 黑方。
- *   返回:   1 = 无,0 = 有。
- */
-int no_legal_move(char map[8][8], int player);
 #endif

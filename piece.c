@@ -3,9 +3,11 @@
 #include <string.h>
 #include "board.h"
 #include "piece.h"
+#include "game.h"
 
 #define IS_LETTER(x) ((x)>='a' && (x)<='h')
 #define IS_NUM(x) (((x)>='1' && (x)<='8'))
+#define VALID_POS(x,y) ((x)>=0 && (x)<8 && (y)>=0 && (y)<8)
 
 #define INVA_MOVE 0
 #define NOR_MOVE 1
@@ -15,37 +17,30 @@
 #define ROOK_MOVE 5
 #define O_O_O 6
 #define O_O 7
+#define PAWN_MOVE 8
+#define CAPTURE 9
 
-typedef struct n
-{
-    char* move;
-    char piece;
-    struct n* next;
-    struct n* varr;
-    int result;//1 for white win, -1 for black win, 0 for draw, 114514 for unsettle
-}node;
 
-State pState={0,0,0,0,0,0,-2,-2};
 
-void State_Print(void)
+void State_Print(State* pState)
 {
     printf("Game state:\n");
-    printf("  WHITE_KING_MOVE   = %d  (white king has moved)\n", pState.WHITE_KING_MOVE);
-    printf("  BLACK_KING_MOVE   = %d  (black king has moved)\n", pState.BLACK_KING_MOVE);
-    printf("  WHITE_A_ROOK_MOVE = %d  (white rook from a1 has moved)\n", pState.WHITE_A_ROOK_MOVE);
-    printf("  WHITE_H_ROOK_MOVE = %d  (white rook from h1 has moved)\n", pState.WHITE_H_ROOK_MOVE);
-    printf("  BLACK_A_ROOK_MOVE = %d  (black rook from a8 has moved)\n", pState.BLACK_A_ROOK_MOVE);
-    printf("  BLACK_H_ROOK_MOVE = %d  (black rook from h8 has moved)\n", pState.BLACK_H_ROOK_MOVE);
+    printf("  WHITE_KING_MOVE   = %d  (white king has moved)\n", pState->WHITE_KING_MOVE);
+    printf("  BLACK_KING_MOVE   = %d  (black king has moved)\n", pState->BLACK_KING_MOVE);
+    printf("  WHITE_A_ROOK_MOVE = %d  (white rook from a1 has moved)\n", pState->WHITE_A_ROOK_MOVE);
+    printf("  WHITE_H_ROOK_MOVE = %d  (white rook from h1 has moved)\n", pState->WHITE_H_ROOK_MOVE);
+    printf("  BLACK_A_ROOK_MOVE = %d  (black rook from a8 has moved)\n", pState->BLACK_A_ROOK_MOVE);
+    printf("  BLACK_H_ROOK_MOVE = %d  (black rook from h8 has moved)\n", pState->BLACK_H_ROOK_MOVE);
 
     printf("  WHITE_EN          = %d  (black may capture en passant on file %c; -2 means none)\n",
-        pState.WHITE_EN,
-        pState.WHITE_EN >= 0 && pState.WHITE_EN < 8 ? 'a' + pState.WHITE_EN : '-');
+        pState->WHITE_EN,
+        pState->WHITE_EN >= 0 && pState->WHITE_EN < 8 ? 'a' + pState->WHITE_EN : '-');
     printf("  BLACK_EN          = %d  (white may capture en passant on file %c; -2 means none)\n",
-        pState.BLACK_EN,
-        pState.BLACK_EN >= 0 && pState.BLACK_EN < 8 ? 'a' + pState.BLACK_EN : '-');
+        pState->BLACK_EN,
+        pState->BLACK_EN >= 0 && pState->BLACK_EN < 8 ? 'a' + pState->BLACK_EN : '-');
 }
 
-int valid_move(const char *move, char map[8][8], int player)
+int valid_move(const char *move, char map[8][8], int player, State* pState)
 {
     if (move == NULL || strlen(move) < 4)
         return INVA_MOVE;
@@ -69,7 +64,7 @@ int valid_move(const char *move, char map[8][8], int player)
         return INVA_MOVE;
 
     if (type == '-')
-        return INVA_MOVE;
+        return INVA_MOVE;  
 
     int dx = abs(to_col - from_col);
     int dy = abs(to_row - from_row);
@@ -89,14 +84,14 @@ int valid_move(const char *move, char map[8][8], int player)
 
         //move 1 square
         if (dx == 0 && to_row - from_row == 1 && map[to_row][to_col] == '-')
-            return NOR_MOVE;
+            return PAWN_MOVE;
 
         //take piece
         if (dx == 1 && dy == 1 && to_row - from_row == 1 && map[to_row][to_col] >= 'A' && map[to_row][to_col] <= 'Z')
-            return NOR_MOVE;
+            return PAWN_MOVE;
 
         //enpassant
-        if (dx == 1 && dy == 1 && to_row - from_row == 1 && from_row == 4 && to_col == pState.WHITE_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'P')
+        if (dx == 1 && dy == 1 && to_row - from_row == 1 && from_row == 4 && to_col == pState->WHITE_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'P')
             return ENPASS;
 
         return INVA_MOVE;
@@ -250,15 +245,15 @@ int valid_move(const char *move, char map[8][8], int player)
 
         //move 1 square
         if (dx == 0 && to_row - from_row == -1 && map[to_row][to_col] == '-')
-            return NOR_MOVE;
+            return PAWN_MOVE;
 
         //take piece
         if (dx == 1 && dy == 1 && to_row - from_row == -1 && map[to_row][to_col] >= 'a' && map[to_row][to_col] <= 'z')
-            return NOR_MOVE;
+            return PAWN_MOVE;
 
         //enpassant
         if (dx == 1 && dy == 1 && to_row - from_row == -1 && from_row == 3 &&
-            to_col == pState.BLACK_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'p')
+            to_col == pState->BLACK_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'p')
             return ENPASS;
 
         return INVA_MOVE;
@@ -402,8 +397,9 @@ int valid_move(const char *move, char map[8][8], int player)
     
     return INVA_MOVE;
 }
-int move(const char *ctrl, char map[8][8], int player)
+int move(const char *ctrl, char map[8][8], int player, int try, State* pState, int* c, int* mate, int* capture, char* prom, char a_prom)
 {
+
     int cap = player?0:32;
     int buttom = player?7:0;
 
@@ -413,12 +409,12 @@ int move(const char *ctrl, char map[8][8], int player)
         //already moved
         if (player)
         {
-            if (pState.WHITE_A_ROOK_MOVE==1 || pState.WHITE_KING_MOVE==1)
+            if (pState->WHITE_A_ROOK_MOVE==1 || pState->WHITE_KING_MOVE==1)
                 return 0;
         }
         else
         {
-            if (pState.BLACK_A_ROOK_MOVE==1 || pState.BLACK_KING_MOVE==1)
+            if (pState->BLACK_A_ROOK_MOVE==1 || pState->BLACK_KING_MOVE==1)
                 return 0;
         }
 
@@ -450,6 +446,19 @@ int move(const char *ctrl, char map[8][8], int player)
         map[buttom][2]='K'+cap;
         map[buttom][0]='-';
         map[buttom][4]='-';
+
+        if (try==1)
+        {
+            /* 同普通走法:只在真实走子时更新细节变量 */
+            int step_c=check(map,!player);
+            int no_move=0;
+            if (step_c)
+                no_move=no_legal_move(map,!player,pState);
+            *c=step_c;
+            *mate=step_c && no_move;
+            *prom=0;
+            *capture=0;
+        }
         
         return O_O_O;
     }
@@ -460,12 +469,12 @@ int move(const char *ctrl, char map[8][8], int player)
         //already moved
         if (player)
         {
-            if (pState.WHITE_H_ROOK_MOVE==1 || pState.WHITE_KING_MOVE==1)
+            if (pState->WHITE_H_ROOK_MOVE==1 || pState->WHITE_KING_MOVE==1)
                 return 0;
         }
         else
         {
-            if (pState.BLACK_H_ROOK_MOVE==1 || pState.BLACK_KING_MOVE==1)
+            if (pState->BLACK_H_ROOK_MOVE==1 || pState->BLACK_KING_MOVE==1)
                 return 0;
         }
 
@@ -496,6 +505,19 @@ int move(const char *ctrl, char map[8][8], int player)
         map[buttom][4]='-';
         map[buttom][7]='-';
 
+        if (try==1)
+        {
+            /* 同普通走法:只在真实走子时更新细节变量 */
+            int step_c=check(map,!player);
+            int no_move=0;
+            if (step_c)
+                no_move=no_legal_move(map,!player,pState);
+            *c=step_c;
+            *mate=step_c && no_move;
+            *prom=0;
+            *capture=0;
+        }
+
         return O_O;
     }
 
@@ -508,7 +530,7 @@ int move(const char *ctrl, char map[8][8], int player)
         int piece=map[from[0]][from[1]];
         int dest=map[to[0]][to[1]];
 
-        int result = valid_move(ctrl, map, player);
+        int result = valid_move(ctrl, map, player, pState);
 
         if (result == 0)
             return 0;     
@@ -531,25 +553,57 @@ int move(const char *ctrl, char map[8][8], int player)
             map[to[0]][to[1]] = dest;
             if (result == ENPASS)
                 map[from[0]][to[1]] = ep_captured;
-            return 0;
-        } 
-
-        if (piece == 'P'+cap && to[0] == 7-buttom)
-        {
-            char p;
-            printf("Choose to promote:\n");
-            scanf(" %c ",&p);
-
-            while (p!='q' && p!='r' && p!='b' && p!='n'
-                && p!='Q' && p!='R' && p!='B' && p!='N')
-                scanf(" %c ",&p);
-            
-            if (p>='a' && p<='z') 
-                map[to[0]][to[1]] = p -32 + cap;
-
-            else 
-                map[to[0]][to[1]] = p + cap;
+            return INVA_MOVE;
         }
+        
+        char p=0;
+        if (piece == 'P'+cap && to[0] == 7-buttom && try)
+        {
+            
+            printf("Choose to promote:\n");
+
+            if (try==1)
+            {
+                scanf("%c",&p);
+
+                while (p!='q' && p!='r' && p!='b' && p!='n'
+                && p!='Q' && p!='R' && p!='B' && p!='N')
+                scanf("%c",&p);
+            
+                if (p>='a' && p<='z') 
+                    map[to[0]][to[1]] = p -32 + cap;
+
+                else 
+                    map[to[0]][to[1]] = p + cap;
+            }
+            else
+            {
+                    map[to[0]][to[1]] = a_prom + cap;
+            }
+
+            
+        }
+
+        if (try)
+        {
+            int step_c=check(map,!player);
+            int no_move=0;
+            if (step_c)
+                no_move=no_legal_move(map,!player,pState);
+            *c=step_c;
+            *mate=step_c && no_move;
+
+            if (try==1)
+                *prom=(p>='a' && p<='z') ? (char)(p-32) : p;
+            else
+                *prom=a_prom;
+                
+            *capture=(dest!='-' || result==ENPASS) ? 1 : 0;
+        }
+
+
+        if (result == ENPASS)
+            return ENPASS;
 
         if (result == PAWN_2)
             return -to[1];
@@ -567,32 +621,32 @@ int move(const char *ctrl, char map[8][8], int player)
     else
         return 0;
 }
-void State_Update(int comm ,int player)
+void State_Update(int comm ,int player ,State* pState)
 {
     if (comm == KING_MOVE)
     {
         if (player)
         {
-            pState.BLACK_EN=-2;
-            pState.WHITE_KING_MOVE=1;
+            pState->BLACK_EN=-2;
+            pState->WHITE_KING_MOVE=1;
         }
         else
         {
-            pState.WHITE_EN=-2;
-            pState.BLACK_KING_MOVE=1;
+            pState->WHITE_EN=-2;
+            pState->BLACK_KING_MOVE=1;
         }
     }   
     if (comm < 0)
     {
         if (player)
         {
-            pState.WHITE_EN=-comm;
-            pState.BLACK_EN=-2;
+            pState->WHITE_EN=-comm;
+            pState->BLACK_EN=-2;
         }
         else
         {
-            pState.WHITE_EN=-2;
-            pState.BLACK_EN=-comm;
+            pState->WHITE_EN=-2;
+            pState->BLACK_EN=-comm;
         }
     }
     if (comm > 100)
@@ -600,60 +654,377 @@ void State_Update(int comm ,int player)
         if (player)
         {
             if (comm%10 == 7 && comm/10%10 == 7)
-                pState.WHITE_H_ROOK_MOVE=1;
+                pState->WHITE_H_ROOK_MOVE=1;
             
             else if (comm%10 == 0 && comm/10%10 == 7)
-                pState.WHITE_A_ROOK_MOVE=1;
+                pState->WHITE_A_ROOK_MOVE=1;
 
-            pState.BLACK_EN=-2;
+            pState->BLACK_EN=-2;
         }
 
         else
         {
             if (comm%10 == 7 && comm/10%10 == 0)
-                pState.BLACK_H_ROOK_MOVE=1;
+                pState->BLACK_H_ROOK_MOVE=1;
             
             else if (comm%10 == 0 && comm/10%10 == 0)
-                pState.BLACK_A_ROOK_MOVE=1;
+                pState->BLACK_A_ROOK_MOVE=1;
 
-            pState.WHITE_EN=-2;
+            pState->WHITE_EN=-2;
         }
     }
     if (comm == NOR_MOVE)
     {
         if (player)
-            pState.BLACK_EN=-2;
+            pState->BLACK_EN=-2;
         else
-            pState.WHITE_EN=-2;
+            pState->WHITE_EN=-2;
+    }
+    if (comm == ENPASS)
+    {
+        /* 吃过路兵已经用掉了对方刚留下的过路兵机会,必须立即清空对应标记,
+           否则这个窗口会留到本方下一步,可能被再次误判为可吃过路兵 */
+        if (player)
+            pState->BLACK_EN=-2;
+        else
+            pState->WHITE_EN=-2;
     }
     if (comm == O_O_O)
     {
         if (player)
         {
-            pState.WHITE_KING_MOVE=1;
-            pState.WHITE_A_ROOK_MOVE=1;
-            pState.BLACK_EN=-2;
+            pState->WHITE_KING_MOVE=1;
+            pState->WHITE_A_ROOK_MOVE=1;
+            pState->BLACK_EN=-2;
         }
         else
         {
-            pState.BLACK_KING_MOVE=1;
-            pState.BLACK_A_ROOK_MOVE=1;
-            pState.WHITE_EN=-2;
+            pState->BLACK_KING_MOVE=1;
+            pState->BLACK_A_ROOK_MOVE=1;
+            pState->WHITE_EN=-2;
         }
     }
     if (comm == O_O)
     {
         if (player)
         {
-            pState.WHITE_KING_MOVE=1;
-            pState.WHITE_H_ROOK_MOVE=1;
-            pState.BLACK_EN=-2;
+            pState->WHITE_KING_MOVE=1;
+            pState->WHITE_H_ROOK_MOVE=1;
+            pState->BLACK_EN=-2;
         }
         else
         {
-            pState.BLACK_KING_MOVE=1;
-            pState.BLACK_H_ROOK_MOVE=1;
-            pState.WHITE_EN=-2;
+            pState->BLACK_KING_MOVE=1;
+            pState->BLACK_H_ROOK_MOVE=1;
+            pState->WHITE_EN=-2;
         }
     }
+}
+char* transform(char map[8][8], const char* ctrl, int player, int capture, int check, int mate, char prom)
+{
+    if (strcmp(ctrl,"o-o-o")==0 || strcmp(ctrl,"O-O-O")==0)
+    {
+        if (mate==1)
+        {
+            char* result=(char*)malloc(sizeof(char)*7);
+            strcpy(result,"O-O-O#");
+            return result;
+        }
+        if (check==1)
+        {
+            char* result=(char*)malloc(sizeof(char)*7);
+            strcpy(result,"O-O-O+");
+            return result;
+        }
+        else
+        {
+            char* result=(char*)malloc(sizeof(char)*7);
+            strcpy(result,"O-O-O");
+            return result;
+        }
+    }
+    if (strcmp(ctrl,"o-o")==0 || strcmp(ctrl,"O-O")==0)
+    {
+        if (mate==1)
+        {
+            char* result=(char*)malloc(sizeof(char)*5);
+            strcpy(result,"O-O#");
+            return result;
+        }
+        if (check==1)
+        {
+            char* result=(char*)malloc(sizeof(char)*5);
+            strcpy(result,"O-O+");
+            return result;
+        }
+        else
+        {
+            char* result=(char*)malloc(sizeof(char)*4);
+            strcpy(result,"O-O");
+            return result;
+        }
+    }
+
+    int from[2]={8-(ctrl[1]-'0'),ctrl[0]-'a'};
+    int to[2]={8-(ctrl[3]-'0'),ctrl[2]-'a'};
+
+    int dir[8][2]={{1,1},{1,-1},{-1,1},{-1,-1},{1,0},{0,1},{-1,0},{0,-1}};
+    int night[8][2]={{1,2},{1,-2},{-1,2},{-1,-2},{2,1},{2,-1},{-2,1},{-2,-1}};
+
+    int cap=player?0:32;
+    int buttom=player?0:7;
+
+    char piece=map[to[0]][to[1]];
+    if (prom!=0)                     /* 升变:落点上是升变后的棋子,按兵处理 */
+        piece='P'+cap;
+
+    if (piece=='P'+cap)
+    {
+        char* result=(char*)malloc(sizeof(char)*8);
+        int top=0;
+
+        if (capture==1)
+        {
+            result[top++]=ctrl[0];
+            result[top++]='x';
+        }
+        result[top++]=ctrl[2];
+        result[top++]=ctrl[3];
+
+        if (to[0]==buttom && prom!=0)
+        {
+            result[top++]='=';
+            result[top++]=(prom>='a' && prom<='z') ? (char)(prom-32) : prom;
+        }
+
+        if (mate==1)
+            result[top++]='#';
+        else if (check==1)
+            result[top++]='+';
+
+        result[top++]='\0';
+
+        return result;
+    }
+    if (piece=='N'+cap)
+    {
+        char* result=(char*)malloc(sizeof(char)*8);
+        int top=0;
+
+        result[top++]='N';
+        int col=1,row=1;
+        int same_file=0,same_rank=0,amb=0;
+        for (int i=0;i<8;i++)
+        {
+            int x_i=to[0]-night[i][0];
+            int y_i=to[1]-night[i][1];
+            if (!VALID_POS(x_i,y_i) || map[x_i][y_i]!='N'+cap)
+                continue;
+            amb=1;
+            if (y_i==from[1]) same_file=1;
+            if (x_i==from[0]) same_rank=1;
+        }
+        if (amb)
+        {
+            if (!same_file)      { col=0; row=1; }  /* 文件唯一:写文件 */
+            else if (!same_rank) { col=1; row=0; }  /* 文件相同:写行号 */
+            else                 { col=0; row=0; }  /* 都不唯一:文件+行号 */
+        }
+        if (col == 0)
+            result[top++]=ctrl[0];
+        if (row == 0)
+            result[top++]=ctrl[1];
+
+        if (capture == 1)
+            result[top++]='x';
+        
+        result[top++]=ctrl[2];
+        result[top++]=ctrl[3];
+
+        if (mate == 1)
+            result[top++]='#';
+        else if (check==1)
+            result[top++]='+';
+
+        result[top++]='\0';
+        return result;
+    }
+    if (piece=='R'+cap)
+    {
+        char* result=(char*)malloc(sizeof(char)*8);
+        int top=0;
+
+        result[top++]='R';
+        int col=1,row=1;
+        int same_file=0,same_rank=0,amb=0;
+        for(int i=4;i<8;i++)
+        {
+            int x_i=to[0]+dir[i][0];
+            int y_i=to[1]+dir[i][1];
+            while (VALID_POS(x_i,y_i) && map[x_i][y_i]=='-')
+            {
+                x_i+=dir[i][0];
+                y_i+=dir[i][1];
+            }
+
+            if (VALID_POS(x_i,y_i) && map[x_i][y_i]=='R'+cap)
+            {
+                amb=1;
+                if (y_i==from[1]) same_file=1;
+                if (x_i==from[0]) same_rank=1;
+            }
+        }
+        if (amb)
+        {
+            if (!same_file)      { col=0; row=1; }
+            else if (!same_rank) { col=1; row=0; }
+            else                 { col=0; row=0; }
+        }
+        if (col == 0)
+            result[top++]=ctrl[0];
+        if (row == 0)
+            result[top++]=ctrl[1];
+
+        if (capture == 1)
+            result[top++]='x';
+        
+        result[top++]=ctrl[2];
+        result[top++]=ctrl[3];    
+
+        if (mate == 1)
+            result[top++]='#';
+        else if (check==1)
+            result[top++]='+';
+
+        result[top++]='\0';
+        return result;
+    }
+    if (piece=='B'+cap)
+    {
+        char* result=(char*)malloc(sizeof(char)*8);
+        int top=0;
+
+        result[top++]='B';
+        int col=1,row=1;
+        int same_file=0,same_rank=0,amb=0;
+        for(int i=0;i<4;i++)
+        {
+            int x_i=to[0]+dir[i][0];
+            int y_i=to[1]+dir[i][1];
+            while (VALID_POS(x_i,y_i) && map[x_i][y_i]=='-')
+            {
+                x_i+=dir[i][0];
+                y_i+=dir[i][1];
+            }
+
+            if (VALID_POS(x_i,y_i) && map[x_i][y_i]=='B'+cap)
+            {
+                amb=1;
+                if (y_i==from[1]) same_file=1;
+                if (x_i==from[0]) same_rank=1;
+            }
+        }
+        if (amb)
+        {
+            if (!same_file)      { col=0; row=1; }
+            else if (!same_rank) { col=1; row=0; }
+            else                 { col=0; row=0; }
+        }
+        if (col == 0)
+            result[top++]=ctrl[0];
+        if (row == 0)
+            result[top++]=ctrl[1];
+
+        if (capture == 1)
+            result[top++]='x';
+        
+        result[top++]=ctrl[2];
+        result[top++]=ctrl[3];    
+
+        if (mate == 1)
+            result[top++]='#';
+        else if (check==1)
+            result[top++]='+';
+
+        result[top++]='\0';
+        return result;
+    }
+    if (piece=='Q'+cap)
+    {
+        char* result=(char*)malloc(sizeof(char)*8);
+        int top=0;
+
+        result[top++]='Q';
+        int col=1,row=1;
+        int same_file=0,same_rank=0,amb=0;
+        for(int i=0;i<8;i++)
+        {
+            int x_i=to[0]+dir[i][0];
+            int y_i=to[1]+dir[i][1];
+            while (VALID_POS(x_i,y_i) && map[x_i][y_i]=='-')
+            {
+                x_i+=dir[i][0];
+                y_i+=dir[i][1];
+            }
+
+            if (VALID_POS(x_i,y_i) && map[x_i][y_i]=='Q'+cap)
+            {
+                amb=1;
+                if (y_i==from[1]) same_file=1;
+                if (x_i==from[0]) same_rank=1;
+            }
+        }
+        if (amb)
+        {
+            if (!same_file)      { col=0; row=1; }
+            else if (!same_rank) { col=1; row=0; }
+            else                 { col=0; row=0; }
+        }
+        if (col == 0)
+            result[top++]=ctrl[0];
+        if (row == 0)
+            result[top++]=ctrl[1];
+
+        if (capture == 1)
+            result[top++]='x';
+        
+        result[top++]=ctrl[2];
+        result[top++]=ctrl[3];    
+
+        if (mate == 1)
+            result[top++]='#';
+        else if (check==1)
+            result[top++]='+';
+
+        result[top++]='\0';
+        return result;
+    }
+    if (piece=='K'+cap)
+    {
+        char* result=(char*)malloc(sizeof(char)*6);
+        int top=0;
+
+        result[top++]='K';
+
+        if (capture == 1)
+            result[top++]='x';
+        
+        result[top++]=ctrl[2];
+        result[top++]=ctrl[3];    
+
+        if (mate == 1)
+            result[top++]='#';
+        else if (check==1)
+            result[top++]='+';
+
+        result[top++]='\0';
+
+        return result;
+    }
+
+    /* 兜底:未识别的棋子类型,返回原始着法串(main 会 free,必须是堆内存) */
+    char* result=(char*)malloc(sizeof(char)*(strlen(ctrl)+1));
+    if (result != NULL)
+        strcpy(result, ctrl);
+    return result;
 }
