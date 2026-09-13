@@ -203,7 +203,7 @@ void analysis(Record* M)
             for (j=0;j<v && Vc->next_varr!=NULL;j++,Vc=Vc->next_varr);
 
             char* p=Vc->move;
-            while (p!='\0' && *p!='=')
+            while (*p!='\0' && *p!='=')
                 p++;
 
             char a_prom=*p=='='?*(p+1):' ';
