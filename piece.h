@@ -43,7 +43,7 @@ int valid_move(const char *move, char map[8][8], int player, State* pState);
  *   ctrl: 见文件头注释的着法格式;
  *   返回: 1 = 走法合法并已写入 map;0 = 非法(此时 map 不被改动)。
  */
-int move(const char *ctrl, char map[8][8], int player, int try, State* pState, int* c, int* mate, int* capture, char* prom);
+int move(const char *ctrl, char map[8][8], int player, int try, State* pState, int* c, int* mate, int* capture, char* prom, char a_prom);
 
 char* transform(char map[8][8], const char* ctrl, int player, int capture, int check, int mate, char prom);
 

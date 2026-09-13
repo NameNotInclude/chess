@@ -397,7 +397,7 @@ int valid_move(const char *move, char map[8][8], int player, State* pState)
     
     return INVA_MOVE;
 }
-int move(const char *ctrl, char map[8][8], int player, int try, State* pState, int* c, int* mate, int* capture, char* prom)
+int move(const char *ctrl, char map[8][8], int player, int try, State* pState, int* c, int* mate, int* capture, char* prom, char a_prom)
 {
 
     int cap = player?0:32;
@@ -557,35 +557,48 @@ int move(const char *ctrl, char map[8][8], int player, int try, State* pState, i
         }
         
         char p=0;
-        if (piece == 'P'+cap && to[0] == 7-buttom && try==1)
+        if (piece == 'P'+cap && to[0] == 7-buttom && try)
         {
             
             printf("Choose to promote:\n");
-            scanf("%c",&p);
 
-            while (p!='q' && p!='r' && p!='b' && p!='n'
+            if (try==1)
+            {
+                scanf("%c",&p);
+
+                while (p!='q' && p!='r' && p!='b' && p!='n'
                 && p!='Q' && p!='R' && p!='B' && p!='N')
                 scanf("%c",&p);
             
-            if (p>='a' && p<='z') 
-                map[to[0]][to[1]] = p -32 + cap;
+                if (p>='a' && p<='z') 
+                    map[to[0]][to[1]] = p -32 + cap;
 
-            else 
-                map[to[0]][to[1]] = p + cap;
+                else 
+                    map[to[0]][to[1]] = p + cap;
+            }
+            else
+            {
+                    map[to[0]][to[1]] = a_prom + cap;
+            }
+
+            
         }
 
-        if (try==1)
+        if (try)
         {
-            /* 试走(try==0)绝不能改写这些全局细节变量,否则会把真实着法的结果冲掉;
-               no_legal_move 内部只做试走,这里先用局部变量算好,再统一写回 */
             int step_c=check(map,!player);
             int no_move=0;
             if (step_c)
                 no_move=no_legal_move(map,!player,pState);
             *c=step_c;
             *mate=step_c && no_move;
-            *prom=(p>='a' && p<='z') ? (char)(p-32) : p;    /* 未升变时为 0 */
-            *capture=(dest!='-' || result==ENPASS) ? 1 : 0; /* 吃过路兵也算吃子 */
+
+            if (try==1)
+                *prom=(p>='a' && p<='z') ? (char)(p-32) : p;
+            else
+                *prom=a_prom;
+                
+            *capture=(dest!='-' || result==ENPASS) ? 1 : 0;
         }
 
 

@@ -86,7 +86,7 @@ Record* play(char board[8][8], State pState,int curr)
 
             sscanf(line,"%5s",ctrl);
 
-            re=move(ctrl,board,player,1,&pState,&c,&mate,&capture,&prom);
+            re=move(ctrl,board,player,1,&pState,&c,&mate,&capture,&prom,' ');
             if (re)
                 break;
 
@@ -201,11 +201,17 @@ void analysis(Record* M)
             Vc=check;
             int j;
             for (j=0;j<v && Vc->next_varr!=NULL;j++,Vc=Vc->next_varr);
+
+            char* p=Vc->move;
+            while (p!='\0' && *p!='=')
+                p++;
+
+            char a_prom=*p=='='?*(p+1):' ';
             
-            re=move(Vc->detail_move,board,curr,1,&pState,&c,&mate,&capture,&prom);
+            re=move(Vc->detail_move,board,curr,1,&pState,&c,&mate,&capture,&prom,a_prom);
 
             if (prom!=0)
-                clear_line();           /* 回放升变着法时同样要清掉剩余输入 */
+                clear_line();
 
             State_Update(re,curr,&pState);
 

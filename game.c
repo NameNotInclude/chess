@@ -112,7 +112,7 @@ int no_legal_move(char map[8][8], int player, State* pState)
 
                     char str[5]={'a'+j,'8'-i,'a'+j+night[k][0],'8'-i-night[k][1],'\0'};
 
-                    if (move(str,map,player,0,pState,&c,&mate,&capture,&prom))
+                    if (move(str,map,player,0,pState,&c,&mate,&capture,&prom,' '))
                     {
                         map[i][j]=piece;
                         map[i+night[k][1]][j+night[k][0]]=des;  
@@ -130,7 +130,7 @@ int no_legal_move(char map[8][8], int player, State* pState)
 
                         char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
 
-                        if (move(str,map,player,0,pState,&c,&mate,&capture,&prom))
+                        if (move(str,map,player,0,pState,&c,&mate,&capture,&prom,' '))
                         {
                             map[i][j]=piece;
                             map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
@@ -149,7 +149,7 @@ int no_legal_move(char map[8][8], int player, State* pState)
 
                         char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
 
-                        if (move(str,map,player,0,pState,&c,&mate,&capture,&prom))
+                        if (move(str,map,player,0,pState,&c,&mate,&capture,&prom,' '))
                         {
                             map[i][j]=piece;
                             map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
@@ -167,7 +167,7 @@ int no_legal_move(char map[8][8], int player, State* pState)
 
                         char str[5]={'a'+j,'8'-i,'a'+j+l*dir[k][0],'8'-i-l*dir[k][1],'\0'};
 
-                        if (move(str,map,player,0,pState,&c,&mate,&capture,&prom))
+                        if (move(str,map,player,0,pState,&c,&mate,&capture,&prom,' '))
                         {
                             map[i][j]=piece;
                             map[i+l*dir[k][1]][j+l*dir[k][0]]=des;
@@ -187,7 +187,7 @@ int no_legal_move(char map[8][8], int player, State* pState)
 
                     char str[5]={'a'+j,'8'-i,'a'+j+dir[k][0],'8'-i-dir[k][1],'\0'};
 
-                    if (move(str,map,player,0,pState,&c,&mate,&capture,&prom))
+                    if (move(str,map,player,0,pState,&c,&mate,&capture,&prom,' '))
                     {
                         map[i][j]=piece;
                         map[i+dir[k][1]][j+dir[k][0]]=des;
@@ -196,7 +196,7 @@ int no_legal_move(char map[8][8], int player, State* pState)
                     }
                 }
 
-                if (move("o-o-o",map,player,0,pState,&c,&mate,&capture,&prom))
+                if (move("o-o-o",map,player,0,pState,&c,&mate,&capture,&prom,' '))
                 {
                     map[buttom][2]='-';
                     map[buttom][3]='-';
@@ -206,7 +206,7 @@ int no_legal_move(char map[8][8], int player, State* pState)
                     return 0;
                 }
 
-                if (move("o-o",map,player,0,pState,&c,&mate,&capture,&prom))
+                if (move("o-o",map,player,0,pState,&c,&mate,&capture,&prom,' '))
                 {
                     map[buttom][5]='-';
                     map[buttom][6]='-';
@@ -231,7 +231,7 @@ int no_legal_move(char map[8][8], int player, State* pState)
 
                     char str[5]={'a'+j,'8'-i,'a'+j+k,'8'-i-forward,'\0'};
 
-                    if (move(str,map,player,0,pState,&c,&mate,&capture,&prom))
+                    if (move(str,map,player,0,pState,&c,&mate,&capture,&prom,' '))
                     {
                         map[i][j]=piece;
                         map[i+forward][j+k]=des;
@@ -248,7 +248,7 @@ int no_legal_move(char map[8][8], int player, State* pState)
 
                     char str[5]={'a'+j,'8'-i,'a'+j,'8'-i-2*forward,'\0'};
 
-                    if (move(str,map,player,0,pState,&c,&mate,&capture,&prom))
+                    if (move(str,map,player,0,pState,&c,&mate,&capture,&prom,' '))
                     {
                         map[i][j]=piece;
                         map[i+forward*2][j]=des;
