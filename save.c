@@ -1,59 +1,95 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "save.h"   /* 内含 piece.h(State)与 game.h(Record) */
+#include "save.h"   /* 内含 piece.h(State)、game.h(Record)与棋谱库节点 Save */
 
 #define SAVE_LINE_MAX  256   /* 一行的最大长度 */
 #define SAVE_TOKEN_MAX 128   /* 单个着法串(detail_move / move)的最大长度 */
 
-/* ==================== 进程内棋谱库 ==================== */
+/* ==================== 进程内棋谱库(链表) ==================== */
 
-#define LIB_INIT_CAP 4       /* 棋谱库初始容量 */
+/*
+ * 用带哨兵头节点的单链表保存棋谱:
+ *   lib_record -> 第 1 份 -> 第 2 份 -> ... -> NULL
+ * 哨兵 temp 是静态变量、不是堆内存,free_all_records() 不会释放它。
+ */
+Save temp;                 /* 哨兵头节点 */
+SPtr lib_record = &temp;   /* 指向哨兵,链表从这里往后接 */
+int lib_count = 0;         /* 已保存的棋谱份数 */
 
-static Record** lib_records = NULL;   /* 保存棋谱指针的数组 */
-static int lib_count = 0;             /* 已保存的棋谱份数 */
-static int lib_cap = 0;               /* 数组容量 */
+SPtr record_list(void)
+{
+    return lib_record->next;      /* 第一份棋谱节点;空库返回 NULL */
+}
 
 int record_count(void)
 {
     return lib_count;
 }
 
-Record* get_record(int index)
-{
-    if (index < 0 || index >= lib_count)
-        return NULL;
-    return lib_records[index];        /* 直接返回库里的指针,不复制 */
-}
-
-int store_record(Record* M)
+int store_record(Record* M, const char* infor)
 {
     if (M == NULL)
         return 0;
 
-    if (lib_count == lib_cap)
+    SPtr newnode = (SPtr)calloc(1, sizeof(Save));
+    if (newnode == NULL)
+        return 0;
+
+    newnode->record = M;
+    newnode->next = NULL;
+
+    /* 说明复制一份存下来,调用方之后可以随意复用/释放自己的缓冲区 */
+    if (infor != NULL)
     {
-        int newcap = (lib_cap == 0) ? LIB_INIT_CAP : lib_cap * 2;
-        Record** tmp = (Record**)realloc(lib_records, sizeof(Record*) * newcap);
-        if (tmp == NULL)
+        newnode->infor = (char*)malloc(strlen(infor) + 1);
+        if (newnode->infor == NULL)
+        {
+            free(newnode);
             return 0;
-        lib_records = tmp;
-        lib_cap = newcap;
+        }
+        strcpy(newnode->infor, infor);
     }
 
-    lib_records[lib_count++] = M;
+    /* 追加到链表尾部 */
+    SPtr check = lib_record;
+    while (check->next != NULL)
+        check = check->next;
+    check->next = newnode;
+
+    lib_count++;
     return 1;
+}
+
+Record* get_record(int index)
+{
+    if (index < 0 || index >= lib_count)
+        return NULL;
+
+    SPtr check = lib_record->next;
+    for (int i = 0; i < index && check != NULL; i++)
+        check = check->next;
+
+    return (check != NULL) ? check->record : NULL;   /* 直接返回库里的指针 */
 }
 
 void free_all_records(void)
 {
-    for (int i = 0; i < lib_count; i++)
-        free_record(lib_records[i]);
+    SPtr check = lib_record->next;
 
-    free(lib_records);
-    lib_records = NULL;
+    while (check != NULL)
+    {
+        SPtr nextnode = check->next;
+
+        free_record(check->record);   /* 棋谱本身(节点与着法字符串) */
+        free(check->infor);           /* 说明 */
+        free(check);                  /* 链表节点 */
+
+        check = nextnode;
+    }
+
+    lib_record->next = NULL;   /* 保留哨兵,只清空链表 */
     lib_count = 0;
-    lib_cap = 0;
 }
 
 /* ==================== 文件保存 / 读取 ==================== */

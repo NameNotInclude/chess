@@ -6,8 +6,9 @@
 
 /*
  * save.h —— 棋谱(Record*)的保存:
- *   1) 进程内保存指针:store_record() 把 play 返回的棋谱收进“棋谱库”,
- *      之后用 get_record() 直接拿同一个指针去分析,不需要时 free_all_records()。
+ *   1) 进程内保存指针:store_record() 把 play 返回的棋谱挂到“棋谱库链表”上,
+ *      每个节点带一句 char*(infor)说明;之后用 record_list()/get_record()
+ *      直接拿同一个指针去分析,不需要时 free_all_records() 统一释放。
  *      (指针只在本次程序运行内有效;跨程序运行要用下面的文件保存)
  *   2) 文件保存:save_record() 写入文本文件,load_record() 下次启动读回来。
  *
@@ -26,28 +27,42 @@
 
 /* 默认存档文件名,可传给 save_record / load_record */
 #define RECORD_FILE "record.txt"
+/* ---------- 进程内棋谱库(链表):保存指针 + 说明,供分析直接使用 ---------- */
 
-/* ---------- 进程内棋谱库:保存指针,供分析直接使用 ---------- */
+/* 棋谱库链表的节点:一份棋谱 + 它的说明 */
+typedef struct n
+{
+    Record* record;        /* 棋谱指针(所有权归棋谱库) */
+    char*   infor;         /* 该棋谱的说明(堆内存,由棋谱库管理) */
+    struct n* next;        /* 下一份棋谱 */
+} Save;
 
+typedef Save* SPtr;
+
+extern SPtr lib_record;
+extern int lib_count;
 /*
- * 把棋谱指针存入棋谱库。
+ * 把棋谱指针追加到棋谱库链表尾部,infor 作为该棋谱的说明(可传 NULL)。
+ * infor 会被复制一份,调用方之后可以随意复用/释放自己的缓冲区。
  * 注意:所有权移交,存进去之后不要再对这个指针调用 free_record(),
  *       统一由 free_all_records() 释放。
  * 返回:1 = 成功;0 = 失败(M 为空或内存不足)。
  */
-int store_record(Record* M);
+int store_record(Record* M, const char* infor);
+
+/* 返回棋谱库链表的第一个节点(空库返回 NULL),便于自己遍历 */
+SPtr record_list(void);
 
 /*
  * 取出第 index 份棋谱(从 0 开始)的指针,直接用于分析。
- * 返回的是库里那个指针本身,不是副本,不要释放它。
- * index 越界返回 NULL。
+ * 返回的是库里那个指针本身,不是副本,不要释放它。index 越界返回 NULL。
  */
 Record* get_record(int index);
 
 /* 棋谱库里保存了多少份棋谱 */
 int record_count(void);
 
-/* 释放棋谱库中的所有棋谱并清空库(不需要时调用) */
+/* 释放棋谱库链表上的所有棋谱、说明与节点,并清空库 */
 void free_all_records(void);
 
 /* ---------- 文件保存 / 读取 ---------- */

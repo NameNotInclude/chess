@@ -315,18 +315,22 @@ void free_record(Record* M)
 {
     if (M == NULL)
         return;
+    
+    free_Mptr(M->head);
 
-    MPtr p = M->head;
-    while (p != NULL)
-    {
-        MPtr nextnode = p->next;
+    free(M);
+}
 
-        free(p->detail_move);
-        free(p->move);
-        free(p);
+void free_Mptr(MPtr M)
+{
+    if (M==NULL)
+        return ;
 
-        p = nextnode;
-    }
+    free(M->detail_move);
+    free(M->move);
+
+    free_Mptr(M->next);
+    free_Mptr(M->next_varr);
 
     free(M);
 }

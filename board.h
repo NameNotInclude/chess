@@ -15,7 +15,7 @@
 
 extern char temp_board[8][8];
 extern char init_board[8][8];
-
+extern char empty_board[8][8];
 /*
  * 以当前行棋方(curr)视角打印整张棋盘(白方视角 a1 在左下,
  * 黑方视角 h8 在左下)。

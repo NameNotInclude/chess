@@ -63,5 +63,7 @@ void add(Record* M,char* ctrl,char* stan);
  */
 void free_record(Record* M);
 
+void free_Mptr(MPtr M);
+
 void print_record(Record* M);
 #endif

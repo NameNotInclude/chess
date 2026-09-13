@@ -1,9 +1,39 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "board.h"
 #include "piece.h"
 #include "game.h"
 #include "mode.h"
+
+static int read_line(char* buf,int size)
+{
+    if (fgets(buf,size,stdin)==NULL)
+    {
+        buf[0]='\0';
+        return 0;
+    }
+
+    if (strchr(buf,'\n')==NULL)
+    {
+        int ch;
+        while ((ch=getchar())!='\n' && ch!=EOF);
+    }
+    else
+        buf[strcspn(buf,"\n")]='\0';
+
+    return 1;
+}
+
+/*
+ * 清掉 move() 里 scanf 留在缓冲区里的本行剩余字符。
+ * 只有发生升变时 move() 才会读字符,所以只在 prom!=0 时调用。
+ */
+static void clear_line(void)
+{
+    int ch;
+    while ((ch=getchar())!='\n' && ch!=EOF);
+}
 
 Record* play(char board[8][8], State pState,int curr)
 {
@@ -11,6 +41,7 @@ Record* play(char board[8][8], State pState,int curr)
 
     int player=curr;
     char* ctrl;
+    char line[128];
 
     int mate=0,capture=0,c=0;
     char prom=0;
@@ -39,15 +70,37 @@ Record* play(char board[8][8], State pState,int curr)
             break;
         }
     
-        int re;
+        int re=0;
         
         ctrl=(char*)malloc(sizeof(char)*6);
-        scanf("%5s",ctrl);
-        while (!(re=move(ctrl,board,player,1,&pState,&c,&mate,&capture,&prom)))
+        while (1)
         {
+            if (!read_line(line,sizeof line))
+            {
+                re=0;
+                break;
+            }
+
+            if (line[0]=='\0')
+                continue;
+
+            sscanf(line,"%5s",ctrl);
+
+            re=move(ctrl,board,player,1,&pState,&c,&mate,&capture,&prom);
+            if (re)
+                break;
+
             printf("Invalid\n");
-            scanf("%5s",ctrl);
         }
+
+        if (!re)
+        {
+            free(ctrl);
+            break;
+        }
+
+        if (prom!=0)
+            clear_line();
 
         printf("%d\n",re);
         
@@ -80,6 +133,7 @@ void analysis(Record* M)
     State pState={0,0,0,0,0,0,-2,-2};
     int mate=0,capture=0,c=0;
     char prom=0;
+    char line[128];
 
     if (M==NULL) return ;
     MPtr check=M->head->next;
@@ -106,13 +160,17 @@ void analysis(Record* M)
             varr_check=varr_check->next_varr;
         }
 
-        char cmd;
         printf("Command:");
-        scanf(" %c", &cmd);
+
+        if (!read_line(line,sizeof line))
+            return;
+
+        char cmd=line[0];
+        if (cmd=='\0')
+            continue;
 
         if (cmd=='n')
         {
-            char* ctrl;
             int re;
 
             MPtr Vc=check;
@@ -123,10 +181,19 @@ void analysis(Record* M)
                 l++;
             }
 
-            int v;
-            printf("Enter Variation:\n");
-            while(scanf("%d",&v)==0 || v>l)
+            int v=0;
+            while (1)
+            {
                 printf("Enter Variation:\n");
+
+                if (!read_line(line,sizeof line))
+                    return;
+
+                if (sscanf(line,"%d",&v)==1 && v>=1 && v<=l)
+                    break;
+
+                printf("Invalid\n");
+            }
 
             
             system("clear");
@@ -136,22 +203,33 @@ void analysis(Record* M)
             for (j=0;j<v && Vc->next_varr!=NULL;j++,Vc=Vc->next_varr);
             
             re=move(Vc->detail_move,board,curr,1,&pState,&c,&mate,&capture,&prom);
+
+            if (prom!=0)
+                clear_line();           /* 回放升变着法时同样要清掉剩余输入 */
+
             State_Update(re,curr,&pState);
 
             curr=!curr;
         }
 
-        if (cmd=='p')
+        else if (cmd=='p')
         {
             Record* temp=play(board,pState,curr);
             system("clear");
 
             varr_check->next_varr=temp->head->next;
+            temp->head->next->prev_varr=varr_check;
             free(temp->head);
             free(temp);
 
             return ;
         }
+
+        else if (cmd=='x')
+            return;
+
+        else
+            continue;
 
         check=check->next;
     }
