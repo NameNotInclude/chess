@@ -22,25 +22,25 @@
 
 
 
-void State_Print(State pState)
+void State_Print(State* pState)
 {
     printf("Game state:\n");
-    printf("  WHITE_KING_MOVE   = %d  (white king has moved)\n", pState.WHITE_KING_MOVE);
-    printf("  BLACK_KING_MOVE   = %d  (black king has moved)\n", pState.BLACK_KING_MOVE);
-    printf("  WHITE_A_ROOK_MOVE = %d  (white rook from a1 has moved)\n", pState.WHITE_A_ROOK_MOVE);
-    printf("  WHITE_H_ROOK_MOVE = %d  (white rook from h1 has moved)\n", pState.WHITE_H_ROOK_MOVE);
-    printf("  BLACK_A_ROOK_MOVE = %d  (black rook from a8 has moved)\n", pState.BLACK_A_ROOK_MOVE);
-    printf("  BLACK_H_ROOK_MOVE = %d  (black rook from h8 has moved)\n", pState.BLACK_H_ROOK_MOVE);
+    printf("  WHITE_KING_MOVE   = %d  (white king has moved)\n", pState->WHITE_KING_MOVE);
+    printf("  BLACK_KING_MOVE   = %d  (black king has moved)\n", pState->BLACK_KING_MOVE);
+    printf("  WHITE_A_ROOK_MOVE = %d  (white rook from a1 has moved)\n", pState->WHITE_A_ROOK_MOVE);
+    printf("  WHITE_H_ROOK_MOVE = %d  (white rook from h1 has moved)\n", pState->WHITE_H_ROOK_MOVE);
+    printf("  BLACK_A_ROOK_MOVE = %d  (black rook from a8 has moved)\n", pState->BLACK_A_ROOK_MOVE);
+    printf("  BLACK_H_ROOK_MOVE = %d  (black rook from h8 has moved)\n", pState->BLACK_H_ROOK_MOVE);
 
     printf("  WHITE_EN          = %d  (black may capture en passant on file %c; -2 means none)\n",
-        pState.WHITE_EN,
-        pState.WHITE_EN >= 0 && pState.WHITE_EN < 8 ? 'a' + pState.WHITE_EN : '-');
+        pState->WHITE_EN,
+        pState->WHITE_EN >= 0 && pState->WHITE_EN < 8 ? 'a' + pState->WHITE_EN : '-');
     printf("  BLACK_EN          = %d  (white may capture en passant on file %c; -2 means none)\n",
-        pState.BLACK_EN,
-        pState.BLACK_EN >= 0 && pState.BLACK_EN < 8 ? 'a' + pState.BLACK_EN : '-');
+        pState->BLACK_EN,
+        pState->BLACK_EN >= 0 && pState->BLACK_EN < 8 ? 'a' + pState->BLACK_EN : '-');
 }
 
-int valid_move(const char *move, char map[8][8], int player, State pState)
+int valid_move(const char *move, char map[8][8], int player, State* pState)
 {
     if (move == NULL || strlen(move) < 4)
         return INVA_MOVE;
@@ -91,7 +91,7 @@ int valid_move(const char *move, char map[8][8], int player, State pState)
             return PAWN_MOVE;
 
         //enpassant
-        if (dx == 1 && dy == 1 && to_row - from_row == 1 && from_row == 4 && to_col == pState.WHITE_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'P')
+        if (dx == 1 && dy == 1 && to_row - from_row == 1 && from_row == 4 && to_col == pState->WHITE_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'P')
             return ENPASS;
 
         return INVA_MOVE;
@@ -253,7 +253,7 @@ int valid_move(const char *move, char map[8][8], int player, State pState)
 
         //enpassant
         if (dx == 1 && dy == 1 && to_row - from_row == -1 && from_row == 3 &&
-            to_col == pState.BLACK_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'p')
+            to_col == pState->BLACK_EN && map[to_row][to_col] == '-' && map[from_row][to_col] == 'p')
             return ENPASS;
 
         return INVA_MOVE;
@@ -397,7 +397,7 @@ int valid_move(const char *move, char map[8][8], int player, State pState)
     
     return INVA_MOVE;
 }
-int move(const char *ctrl, char map[8][8], int player, int try, State pState, int* c, int* mate, int* capture, char* prom)
+int move(const char *ctrl, char map[8][8], int player, int try, State* pState, int* c, int* mate, int* capture, char* prom)
 {
 
     int cap = player?0:32;
@@ -409,12 +409,12 @@ int move(const char *ctrl, char map[8][8], int player, int try, State pState, in
         //already moved
         if (player)
         {
-            if (pState.WHITE_A_ROOK_MOVE==1 || pState.WHITE_KING_MOVE==1)
+            if (pState->WHITE_A_ROOK_MOVE==1 || pState->WHITE_KING_MOVE==1)
                 return 0;
         }
         else
         {
-            if (pState.BLACK_A_ROOK_MOVE==1 || pState.BLACK_KING_MOVE==1)
+            if (pState->BLACK_A_ROOK_MOVE==1 || pState->BLACK_KING_MOVE==1)
                 return 0;
         }
 
@@ -469,12 +469,12 @@ int move(const char *ctrl, char map[8][8], int player, int try, State pState, in
         //already moved
         if (player)
         {
-            if (pState.WHITE_H_ROOK_MOVE==1 || pState.WHITE_KING_MOVE==1)
+            if (pState->WHITE_H_ROOK_MOVE==1 || pState->WHITE_KING_MOVE==1)
                 return 0;
         }
         else
         {
-            if (pState.BLACK_H_ROOK_MOVE==1 || pState.BLACK_KING_MOVE==1)
+            if (pState->BLACK_H_ROOK_MOVE==1 || pState->BLACK_KING_MOVE==1)
                 return 0;
         }
 
@@ -608,32 +608,32 @@ int move(const char *ctrl, char map[8][8], int player, int try, State pState, in
     else
         return 0;
 }
-void State_Update(int comm ,int player ,State pState)
+void State_Update(int comm ,int player ,State* pState)
 {
     if (comm == KING_MOVE)
     {
         if (player)
         {
-            pState.BLACK_EN=-2;
-            pState.WHITE_KING_MOVE=1;
+            pState->BLACK_EN=-2;
+            pState->WHITE_KING_MOVE=1;
         }
         else
         {
-            pState.WHITE_EN=-2;
-            pState.BLACK_KING_MOVE=1;
+            pState->WHITE_EN=-2;
+            pState->BLACK_KING_MOVE=1;
         }
     }   
     if (comm < 0)
     {
         if (player)
         {
-            pState.WHITE_EN=-comm;
-            pState.BLACK_EN=-2;
+            pState->WHITE_EN=-comm;
+            pState->BLACK_EN=-2;
         }
         else
         {
-            pState.WHITE_EN=-2;
-            pState.BLACK_EN=-comm;
+            pState->WHITE_EN=-2;
+            pState->BLACK_EN=-comm;
         }
     }
     if (comm > 100)
@@ -641,60 +641,69 @@ void State_Update(int comm ,int player ,State pState)
         if (player)
         {
             if (comm%10 == 7 && comm/10%10 == 7)
-                pState.WHITE_H_ROOK_MOVE=1;
+                pState->WHITE_H_ROOK_MOVE=1;
             
             else if (comm%10 == 0 && comm/10%10 == 7)
-                pState.WHITE_A_ROOK_MOVE=1;
+                pState->WHITE_A_ROOK_MOVE=1;
 
-            pState.BLACK_EN=-2;
+            pState->BLACK_EN=-2;
         }
 
         else
         {
             if (comm%10 == 7 && comm/10%10 == 0)
-                pState.BLACK_H_ROOK_MOVE=1;
+                pState->BLACK_H_ROOK_MOVE=1;
             
             else if (comm%10 == 0 && comm/10%10 == 0)
-                pState.BLACK_A_ROOK_MOVE=1;
+                pState->BLACK_A_ROOK_MOVE=1;
 
-            pState.WHITE_EN=-2;
+            pState->WHITE_EN=-2;
         }
     }
     if (comm == NOR_MOVE)
     {
         if (player)
-            pState.BLACK_EN=-2;
+            pState->BLACK_EN=-2;
         else
-            pState.WHITE_EN=-2;
+            pState->WHITE_EN=-2;
+    }
+    if (comm == ENPASS)
+    {
+        /* 吃过路兵已经用掉了对方刚留下的过路兵机会,必须立即清空对应标记,
+           否则这个窗口会留到本方下一步,可能被再次误判为可吃过路兵 */
+        if (player)
+            pState->BLACK_EN=-2;
+        else
+            pState->WHITE_EN=-2;
     }
     if (comm == O_O_O)
     {
         if (player)
         {
-            pState.WHITE_KING_MOVE=1;
-            pState.WHITE_A_ROOK_MOVE=1;
-            pState.BLACK_EN=-2;
+            pState->WHITE_KING_MOVE=1;
+            pState->WHITE_A_ROOK_MOVE=1;
+            pState->BLACK_EN=-2;
         }
         else
         {
-            pState.BLACK_KING_MOVE=1;
-            pState.BLACK_A_ROOK_MOVE=1;
-            pState.WHITE_EN=-2;
+            pState->BLACK_KING_MOVE=1;
+            pState->BLACK_A_ROOK_MOVE=1;
+            pState->WHITE_EN=-2;
         }
     }
     if (comm == O_O)
     {
         if (player)
         {
-            pState.WHITE_KING_MOVE=1;
-            pState.WHITE_H_ROOK_MOVE=1;
-            pState.BLACK_EN=-2;
+            pState->WHITE_KING_MOVE=1;
+            pState->WHITE_H_ROOK_MOVE=1;
+            pState->BLACK_EN=-2;
         }
         else
         {
-            pState.BLACK_KING_MOVE=1;
-            pState.BLACK_H_ROOK_MOVE=1;
-            pState.WHITE_EN=-2;
+            pState->BLACK_KING_MOVE=1;
+            pState->BLACK_H_ROOK_MOVE=1;
+            pState->WHITE_EN=-2;
         }
     }
 }

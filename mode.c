@@ -16,7 +16,7 @@ Record* play(char board[8][8], State pState)
     Record* m=init();
     while (1)
     {
-        State_Print(pState);
+        State_Print(&pState);
         board_print(board,player);
         
 
@@ -24,30 +24,31 @@ Record* play(char board[8][8], State pState)
         {
             printf("check");
 
-            if (no_legal_move(board,player,pState))
+            if (no_legal_move(board,player,&pState))
             {
                 printf("mate!\n%s win",player?"Black":"White");
                 break;
             }
             printf("\n");
         }
-        else if (no_legal_move(board,player,pState))
+        else if (no_legal_move(board,player,&pState))
         {
             printf("Stalemate!\nDraw");
             break;
         }
     
         int re;
-        printf("%d\n",re);
-
+        
         ctrl=(char*)malloc(sizeof(char)*6);
         scanf("%5s",ctrl);
-        while (!(re=move(ctrl,board,player,1,pState,&c,&mate,&capture,&prom)))
+        while (!(re=move(ctrl,board,player,1,&pState,&c,&mate,&capture,&prom)))
         {
             printf("Invalid\n");
             scanf("%5s",ctrl);
         }
 
+        printf("%d\n",re);
+        
         char* nor=transform(board,ctrl,player,capture,c,mate,prom);
         //printf("%s\n",nor);
 
@@ -58,7 +59,7 @@ Record* play(char board[8][8], State pState)
 
         add(m,ctrl,nor);
         
-        State_Update(re,player,pState);
+        State_Update(re,player,&pState);
 
         system("clear");
         player=!player;
@@ -109,7 +110,7 @@ void analysis(Record* M)
             ctrl=(char*)malloc(sizeof(char)*6);
             scanf("%5s",ctrl);
 
-            while (!(re=move(ctrl,board,curr,1,pState,&c,&mate,&capture,&prom)))
+            while (!(re=move(ctrl,board,curr,1,&pState,&c,&mate,&capture,&prom)))
             {
                 printf("Invalid\n");
                 scanf("%5s",ctrl);

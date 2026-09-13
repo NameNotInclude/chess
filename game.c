@@ -87,7 +87,7 @@ int check(char map[8][8], int player)
     return 0;
 }
 
-int no_legal_move(char map[8][8], int player, State pState)
+int no_legal_move(char map[8][8], int player, State* pState)
 {
     int dir[8][2]={{1,1},{1,-1},{-1,1},{-1,-1},{1},{0,1},{-1},{0,-1}};
     int night[8][2]={{1,2},{1,-2},{-1,2},{-1,-2},{2,1},{2,-1},{-2,1},{-2,-1}};
