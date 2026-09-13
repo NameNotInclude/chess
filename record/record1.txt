@@ -1,0 +1,5 @@
+# chess record v1
+f2f4 f4
+e7e6 e6
+g2g4 g4
+d8h4 Qh4#

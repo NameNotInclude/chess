@@ -135,7 +135,7 @@ void analysis(Record* M)
             int j;
             for (j=0;j<v && Vc->next_varr!=NULL;j++,Vc=Vc->next_varr);
             
-            int re=move(Vc->detail_move,board,curr,1,&pState,&c,&mate,&capture,&prom);
+            re=move(Vc->detail_move,board,curr,1,&pState,&c,&mate,&capture,&prom);
             State_Update(re,curr,&pState);
 
             curr=!curr;

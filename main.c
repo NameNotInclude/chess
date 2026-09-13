@@ -4,7 +4,7 @@
 #include "piece.h"
 #include "game.h"
 #include "mode.h"
-
+#include "save.h"
 
 int main()
 {
@@ -16,13 +16,11 @@ int main()
     Record* m=play(board,pState,1);
 
     printf("%p\n",m);
-    print_record(m);
 
     analysis(m);
-
-    print_record(m);
-
-    analysis(m);
+    
+    save_record(m,"record/record1.txt");
+    save_record(m,"record/record2.txt");
 
     free_record(m);
     return 0;

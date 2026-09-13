@@ -12,6 +12,7 @@
                 "${workspaceFolder}/piece.c",
                 "${workspaceFolder}/game.c",
                 "${workspaceFolder}/mode.c",
+                "${workspaceFolder}/save.c",
                 "-o",
                 "${workspaceFolder}/chess"
             ],
